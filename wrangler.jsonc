@@ -12,7 +12,7 @@
     {
       "binding": "DB",
       "database_name": "fashion-atelier-db",
-      "database_id": "REPLACE_WITH_YOUR_D1_DATABASE_ID"
+      "database_id": "bc4bc842-8545-44bc-ace5-660151829987"
     }
   ],
   "r2_buckets": [
@@ -22,6 +22,6 @@
     }
   ],
   "vars": {
-    "ADMIN_EMAILS": "designer@example.com"
+    "ADMIN_EMAILS": "designer@local"
   }
 }
