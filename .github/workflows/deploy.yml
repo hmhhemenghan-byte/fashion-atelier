@@ -1,0 +1,50 @@
+name: CI & Deployment Pipeline
+
+on:
+  push:
+    branches:
+      - main
+      - master
+  pull_request:
+    branches:
+      - main
+      - master
+
+jobs:
+  verify-and-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Code Lint Check
+        run: npx eslint . --ignore-pattern dist --ignore-pattern .next
+
+      - name: TypeScript Type Check
+        run: npx tsc --noEmit
+
+      - name: Build Application Bundle
+        run: npx vinext build
+
+      - name: Validate Worker Artifact
+        run: bash scripts/validate-artifact.sh
+
+      - name: Run Integration Tests
+        run: node --test tests/rendered-html.test.mjs
+
+      - name: Deploy to Cloudflare Workers
+        if: github.event_name == 'push'
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
