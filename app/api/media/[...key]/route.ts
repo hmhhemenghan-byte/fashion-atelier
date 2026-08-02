@@ -137,7 +137,7 @@ export async function GET(request: Request, context: RouteContext) {
     });
     if (!object) return new Response("Not found", { status: 404 });
 
-    if (!object.body) {
+    if (!("body" in object) || !object.body) {
       return new Response(null, { status: 304, headers: { etag: object.httpEtag } });
     }
 

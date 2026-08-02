@@ -58,6 +58,11 @@ export default function SeasonCommand() {
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState("");
 
+  const [urgencyFilter, setUrgencyFilter] = useState<SeasonCommandUrgency | "all">("all");
+  const [categoryFilter, setCategoryFilter] = useState<string>("all");
+  const [agendaSearchQuery, setAgendaSearchQuery] = useState<string>("");
+  const [workbenchSearchQuery, setWorkbenchSearchQuery] = useState<string>("");
+
   const loadOverview = useCallback(async (quiet = false) => {
     if (quiet) setRefreshing(true);
     else setLoading(true);
@@ -135,12 +140,84 @@ export default function SeasonCommand() {
 
   const visibleAgenda = useMemo(() => {
     if (!overview) return [];
-    if (!selectedCollection) return overview.agenda;
-    return overview.agenda.filter(
-      (item) =>
-        !item.collectionId || item.collectionId === selectedCollection.id,
+    let items = overview.agenda;
+    if (selectedCollection) {
+      items = items.filter(
+        (item) =>
+          !item.collectionId || item.collectionId === selectedCollection.id,
+      );
+    }
+    if (urgencyFilter !== "all") {
+      items = items.filter((item) => item.urgency === urgencyFilter);
+    }
+    if (categoryFilter !== "all") {
+      if (categoryFilter === "creation") {
+        items = items.filter((item) =>
+          ["review", "editorial", "calendar"].includes(item.kind),
+        );
+      } else if (categoryFilter === "technical") {
+        items = items.filter((item) =>
+          ["material", "technical", "fitting", "sampleSignoff"].includes(item.kind),
+        );
+      } else if (categoryFilter === "operations") {
+        items = items.filter((item) =>
+          ["inventory", "loan", "productionRelease", "productionException"].includes(
+            item.kind,
+          ),
+        );
+      } else if (categoryFilter === "outreach") {
+        items = items.filter((item) =>
+          ["showroom", "relationship", "outreach", "placement"].includes(
+            item.kind,
+          ),
+        );
+      }
+    }
+    if (agendaSearchQuery.trim()) {
+      const q = agendaSearchQuery.trim().toLowerCase();
+      items = items.filter(
+        (item) =>
+          item.title.toLowerCase().includes(q) ||
+          item.detail.toLowerCase().includes(q) ||
+          item.eyebrow.toLowerCase().includes(q),
+      );
+    }
+    return items;
+  }, [
+    overview,
+    selectedCollection,
+    urgencyFilter,
+    categoryFilter,
+    agendaSearchQuery,
+  ]);
+
+  const filteredGroupedModules = useMemo(() => {
+    if (!overview) return [];
+    const q = workbenchSearchQuery.trim().toLowerCase();
+    const groups = (Object.keys(groupLabels) as SeasonCommandGroup[]).map(
+      (group) => {
+        let modules = overview.modules.filter((m) => m.group === group);
+        if (q) {
+          modules = modules.filter(
+            (m) =>
+              m.label.toLowerCase().includes(q) ||
+              m.english.toLowerCase().includes(q) ||
+              m.phase.toLowerCase().includes(q),
+          );
+        }
+        return { group, modules };
+      },
     );
-  }, [overview, selectedCollection]);
+    return groups.filter((g) => g.modules.length > 0);
+  }, [overview, workbenchSearchQuery]);
+
+  const handleExportJson = useCallback(() => {
+    window.open("/api/studio/command?format=json&download=1", "_blank");
+  }, []);
+
+  const handleExportCsv = useCallback(() => {
+    window.open("/api/studio/command?format=csv", "_blank");
+  }, []);
 
   if (loading && !overview) {
     return (
@@ -169,13 +246,6 @@ export default function SeasonCommand() {
       </section>
     );
   }
-
-  const groupedModules = (
-    Object.keys(groupLabels) as SeasonCommandGroup[]
-  ).map((group) => ({
-    group,
-    modules: overview.modules.filter((module) => module.group === group),
-  }));
 
   return (
     <section
@@ -217,13 +287,21 @@ export default function SeasonCommand() {
                   } 项需要人工处理`}
             </small>
           </p>
-          <button
-            type="button"
-            disabled={refreshing}
-            onClick={() => void loadOverview(true)}
-          >
-            {refreshing ? "正在同步…" : "刷新事实"} <span>↻</span>
-          </button>
+          <div className="studio-command-hero-actions">
+            <button
+              type="button"
+              disabled={refreshing}
+              onClick={() => void loadOverview(true)}
+            >
+              {refreshing ? "正在同步…" : "刷新事实"} <span>↻</span>
+            </button>
+            <button type="button" onClick={handleExportJson} title="导出完整JSON战报">
+              导出JSON <span>↓</span>
+            </button>
+            <button type="button" onClick={handleExportCsv} title="导出行动议程CSV">
+              导出CSV <span>↓</span>
+            </button>
+          </div>
         </aside>
       </div>
 
@@ -359,6 +437,57 @@ export default function SeasonCommand() {
               {visibleAgenda.length.toString().padStart(2, "0")} ITEMS
             </span>
           </header>
+
+          <div className="studio-command-agenda-controls">
+            <div className="studio-command-agenda-filters">
+              {(["all", "overdue", "today", "upcoming", "attention"] as const).map(
+                (urgency) => (
+                  <button
+                    type="button"
+                    key={urgency}
+                    className={urgencyFilter === urgency ? "is-active" : ""}
+                    onClick={() => setUrgencyFilter(urgency)}
+                  >
+                    {urgency === "all" ? "全部紧迫度" : urgencyLabels[urgency]}
+                  </button>
+                ),
+              )}
+            </div>
+
+            <div className="studio-command-agenda-categories">
+              {[
+                { id: "all", label: "全部领域" },
+                { id: "creation", label: "创造与评审" },
+                { id: "technical", label: "材料与技术" },
+                { id: "operations", label: "样衣与生产" },
+                { id: "outreach", label: "关系与外联" },
+              ].map((cat) => (
+                <button
+                  type="button"
+                  key={cat.id}
+                  className={categoryFilter === cat.id ? "is-active" : ""}
+                  onClick={() => setCategoryFilter(cat.id)}
+                >
+                  {cat.label}
+                </button>
+              ))}
+            </div>
+
+            <div className="studio-command-agenda-search">
+              <input
+                type="text"
+                placeholder="搜索行动事项关键词…"
+                value={agendaSearchQuery}
+                onChange={(e) => setAgendaSearchQuery(e.target.value)}
+              />
+              {agendaSearchQuery && (
+                <button type="button" onClick={() => setAgendaSearchQuery("")}>
+                  ✕
+                </button>
+              )}
+            </div>
+          </div>
+
           {visibleAgenda.length > 0 ? (
             <ol>
               {visibleAgenda.map((item, index) => (
@@ -368,7 +497,7 @@ export default function SeasonCommand() {
           ) : (
             <div className="studio-command-agenda-empty">
               <span>ALL CLEAR</span>
-              <p>当前筛选下没有需要处理的事实。</p>
+              <p>当前筛选下没有匹配的行动事项。</p>
             </div>
           )}
         </section>
@@ -382,10 +511,19 @@ export default function SeasonCommand() {
               <small>04 / STUDIO MAP</small>
               <h3 id="season-map-title">工作台索引</h3>
             </div>
-            <span>24 WORKBENCHES</span>
+            <div className="studio-command-map-header-right">
+              <input
+                type="text"
+                className="studio-command-map-search-input"
+                placeholder="过滤工作台 (例: 21, 材料, 试衣)..."
+                value={workbenchSearchQuery}
+                onChange={(e) => setWorkbenchSearchQuery(e.target.value)}
+              />
+              <span>24 WORKBENCHES</span>
+            </div>
           </header>
           <div>
-            {groupedModules.map(({ group, modules }) => (
+            {filteredGroupedModules.map(({ group, modules }) => (
               <section key={group}>
                 <header>
                   <span>{groupLabels[group].number}</span>
@@ -429,7 +567,15 @@ export default function SeasonCommand() {
             ? `最新归档：${overview.archive.latestLabel} · nera-archive/${overview.archive.schemaVersion}`
             : "尚未创建不可变交接快照"}
         </p>
-        <a href="#archive-handoff">前往归档 →</a>
+        <div className="studio-command-footer-actions">
+          <button type="button" onClick={handleExportJson}>
+            导出 JSON 战报
+          </button>
+          <button type="button" onClick={handleExportCsv}>
+            导出 CSV 议程
+          </button>
+          <a href="#archive-handoff">前往归档 →</a>
+        </div>
       </footer>
     </section>
   );
