@@ -10,6 +10,8 @@ const { d1, r2 } = hostingConfig;
 
 // macOS Seatbelt blocks FSEvents, so Codex previews need polling for HMR.
 const isCodexSeatbeltSandbox = process.env.CODEX_SANDBOX === "seatbelt";
+const isDirectCloudflareBuild =
+  process.env.NERA_DEPLOY_TARGET === "cloudflare";
 
 const localBindingConfig = {
   main: "./worker/index.ts",
@@ -57,7 +59,9 @@ export default defineConfig(async () => {
       cloudflare({
         viteEnvironment: { name: "rsc", childEnvironments: ["ssr"] },
         inspectorPort: false,
-        config: localBindingConfig,
+        ...(isDirectCloudflareBuild
+          ? { configPath: "./wrangler.cloudflare.json" }
+          : { config: localBindingConfig }),
       }),
     ],
   };

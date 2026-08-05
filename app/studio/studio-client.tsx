@@ -15,6 +15,17 @@ import FittingRoom from "./fitting-room";
 import FinalSampleGate from "./final-sample-gate";
 import ProductionReleaseDesk from "./production-release-desk";
 import ProductionChangeControl from "./production-change-control";
+import ProductionAcceptance from "./production-acceptance";
+import ProvenanceDossier from "./provenance-dossier";
+import ConservationAtelier from "./conservation-atelier";
+import ExhibitionReadiness from "./exhibition-readiness";
+import ExhibitionWatch from "./exhibition-watch";
+import ExhibitionRecovery from "./exhibition-recovery";
+import ArchiveCuration from "./archive-curation";
+import ExhibitionInterpretation from "./exhibition-interpretation";
+import ExhibitionDelivery from "./exhibition-delivery";
+import ExhibitionInstallation from "./exhibition-installation";
+import ExhibitionOpening from "./exhibition-opening";
 import OutreachDesk from "./outreach-desk";
 import ProcessDossierManager from "./process-dossier-manager";
 import PublicationManager from "./publication-manager";
@@ -411,6 +422,17 @@ export default function StudioClient() {
       <FinalSampleGate />
       <ProductionReleaseDesk />
       <ProductionChangeControl />
+      <ProductionAcceptance />
+      <ProvenanceDossier />
+      <ConservationAtelier />
+      <ExhibitionReadiness />
+      <ExhibitionWatch />
+      <ExhibitionRecovery />
+      <ArchiveCuration />
+      <ExhibitionInterpretation />
+      <ExhibitionDelivery />
+      <ExhibitionInstallation />
+      <ExhibitionOpening />
       <EditorialOperations />
       <EditorialCalendar />
       <ArchiveHandoff />

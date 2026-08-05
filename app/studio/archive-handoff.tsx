@@ -256,7 +256,7 @@ export default function ArchiveHandoff() {
               index="A"
               title="完整交接数据包"
               format="JSON / RELATIONAL"
-              detail="作品、图库、过程、系列、材料与 Look 用料、技术包、尺寸规格、工艺说明、生产放行与偏差时间线、设计评审、发布、排期、私享展厅、样衣、关系、外联、QA 与媒体清单。"
+              detail="作品、图库、过程、系列、材料与 Look 用料、技术包、生产与验收、溯源、养护、展陈、展期监测、展后复原、设计评审、发布、排期、私享展厅、关系、外联、QA 与媒体清单。"
               href="/api/studio/handoff?format=bundle"
               tone="primary"
             />
@@ -439,6 +439,35 @@ export default function ArchiveHandoff() {
                     <span>{snapshot.productionReleaseCheckCount} RELEASE CHECKS</span>
                     <span>{snapshot.productionExceptionCount} DEVIATIONS</span>
                     <span>{snapshot.productionExceptionActionCount} CHANGE ACTIONS</span>
+                    <span>{snapshot.productionAcceptanceCount} ACCEPTANCES</span>
+                    <span>{snapshot.productionAcceptanceCheckCount} ACCEPT CHECKS</span>
+                    <span>{snapshot.productionAcceptanceImageCount} ACCEPT IMAGES</span>
+                    <span>{snapshot.provenanceDossierCount} PROVENANCE</span>
+                    <span>{snapshot.provenanceDossierCheckCount} PUBLIC CHECKS</span>
+                    <span>{snapshot.conservationReportCount} CARE REPORTS</span>
+                    <span>{snapshot.conservationReportCheckCount} CARE CHECKS</span>
+                    <span>{snapshot.conservationReportImageCount} CARE IMAGES</span>
+                    <span>{snapshot.exhibitionReadinessPlanCount} DISPLAY PLANS</span>
+                    <span>{snapshot.exhibitionReadinessCheckCount} DISPLAY CHECKS</span>
+                    <span>{snapshot.exhibitionReadinessImageCount} MOUNT TESTS</span>
+                    <span>{snapshot.exhibitionWatchCount} EXHIBITION WATCHES</span>
+                    <span>{snapshot.exhibitionWatchObservationCount} FIELD NOTES</span>
+                    <span>{snapshot.exhibitionWatchImageCount} WATCH EVIDENCE</span>
+                    <span>{snapshot.exhibitionRecoveryCount} RECOVERIES</span>
+                    <span>{snapshot.exhibitionRecoveryCheckCount} RECOVERY CHECKS</span>
+                    <span>{snapshot.exhibitionRecoveryImageCount} RECOVERY EVIDENCE</span>
+                    <span>{snapshot.curatorialProjectCount} CURATORIAL PROJECTS</span>
+                    <span>{snapshot.curatorialSelectionCount} CURATORIAL SELECTIONS</span>
+                    <span>{snapshot.interpretationPackageCount} INTERPRETATION PACKAGES</span>
+                    <span>{snapshot.interpretationSectionCount} NARRATIVE SECTIONS</span>
+                    <span>{snapshot.interpretationLabelCount} OBJECT LABELS</span>
+                    <span>{snapshot.exhibitionDeliveryPackageCount} DELIVERY PACKAGES</span>
+                    <span>{snapshot.exhibitionDeliveryItemCount} DELIVERY ITEMS</span>
+                    <span>{snapshot.exhibitionInstallationGateCount} INSTALLATION GATES</span>
+                    <span>{snapshot.exhibitionInstallationCheckCount} INSTALLATION CHECKS</span>
+                    <span>{snapshot.exhibitionInstallationImageCount} INSTALLATION EVIDENCE</span>
+                    <span>{snapshot.exhibitionOpeningGateCount} OPENING GATES</span>
+                    <span>{snapshot.exhibitionOpeningItemCount} OPENING WORKS</span>
                     <span>{snapshot.mediaCount} MEDIA</span>
                     <span>{formatBytes(snapshot.mediaBytes)}</span>
                   </div>
@@ -572,6 +601,35 @@ function LatestDelta(props: {
             label="CHANGE ACTIONS"
             value={delta.productionExceptionActions}
           />
+          <DeltaValue label="ACCEPTANCES" value={delta.productionAcceptances} />
+          <DeltaValue label="ACCEPT CHECKS" value={delta.productionAcceptanceChecks} />
+          <DeltaValue label="ACCEPT IMAGES" value={delta.productionAcceptanceImages} />
+          <DeltaValue label="PROVENANCE" value={delta.provenanceDossiers} />
+          <DeltaValue label="PUBLIC CHECKS" value={delta.provenanceDossierChecks} />
+          <DeltaValue label="CARE REPORTS" value={delta.conservationReports} />
+          <DeltaValue label="CARE CHECKS" value={delta.conservationReportChecks} />
+          <DeltaValue label="CARE IMAGES" value={delta.conservationReportImages} />
+          <DeltaValue label="DISPLAY PLANS" value={delta.exhibitionReadinessPlans} />
+          <DeltaValue label="DISPLAY CHECKS" value={delta.exhibitionReadinessChecks} />
+          <DeltaValue label="MOUNT TESTS" value={delta.exhibitionReadinessImages} />
+          <DeltaValue label="EXHIBITION WATCHES" value={delta.exhibitionWatches} />
+          <DeltaValue label="FIELD NOTES" value={delta.exhibitionWatchObservations} />
+          <DeltaValue label="WATCH EVIDENCE" value={delta.exhibitionWatchImages} />
+          <DeltaValue label="RECOVERIES" value={delta.exhibitionRecoveries} />
+          <DeltaValue label="RECOVERY CHECKS" value={delta.exhibitionRecoveryChecks} />
+          <DeltaValue label="RECOVERY EVIDENCE" value={delta.exhibitionRecoveryImages} />
+          <DeltaValue label="CURATORIAL PROJECTS" value={delta.curatorialProjects} />
+          <DeltaValue label="CURATORIAL SELECTIONS" value={delta.curatorialSelections} />
+          <DeltaValue label="INTERPRETATION PACKAGES" value={delta.interpretationPackages} />
+          <DeltaValue label="NARRATIVE SECTIONS" value={delta.interpretationSections} />
+          <DeltaValue label="OBJECT LABELS" value={delta.interpretationLabels} />
+          <DeltaValue label="DELIVERY PACKAGES" value={delta.exhibitionDeliveryPackages} />
+          <DeltaValue label="DELIVERY ITEMS" value={delta.exhibitionDeliveryItems} />
+          <DeltaValue label="INSTALLATION GATES" value={delta.exhibitionInstallationGates} />
+          <DeltaValue label="INSTALLATION CHECKS" value={delta.exhibitionInstallationChecks} />
+          <DeltaValue label="INSTALLATION EVIDENCE" value={delta.exhibitionInstallationImages} />
+          <DeltaValue label="OPENING GATES" value={delta.exhibitionOpeningGates} />
+          <DeltaValue label="OPENING WORKS" value={delta.exhibitionOpeningItems} />
           <DeltaValue label="MEDIA" value={delta.mediaAssets} />
           <DeltaValue
             label="STORAGE"

@@ -2,6 +2,15 @@ type FashionRuntimeEnv = {
   DB?: D1Database;
   BUCKET?: R2Bucket;
   ADMIN_EMAILS?: string;
+  AUTH_PROVIDER?: string;
+  TEAM_DOMAIN?: string;
+  POLICY_AUD?: string;
+};
+
+export type AuthRuntimeConfig = {
+  provider: "sites" | "cloudflare-access";
+  policyAudience: string | null;
+  teamDomain: string | null;
 };
 
 let runtimeEnvPromise: Promise<FashionRuntimeEnv> | undefined;
@@ -26,28 +35,29 @@ export async function getBucket(): Promise<R2Bucket> {
 }
 
 export async function getAdminEmails(): Promise<Set<string>> {
-  let value = "";
-  try {
-    value = (await getRuntimeEnv()).ADMIN_EMAILS ?? "";
-  } catch {
-    // getRuntimeEnv may fail in non-Workers dev mode
-  }
-  const set = new Set(
+  const value = (await getRuntimeEnv()).ADMIN_EMAILS ?? "";
+  return new Set(
     value
       .split(",")
       .map((email) => email.trim().toLowerCase())
       .filter(Boolean),
   );
-  if (process.env.NODE_ENV === "development") {
-    set.add("designer@local");
-  }
-  return set;
+}
+
+export async function getAuthRuntimeConfig(): Promise<AuthRuntimeConfig> {
+  const runtime = await getRuntimeEnv();
+  const provider =
+    runtime.AUTH_PROVIDER?.trim().toLowerCase() === "cloudflare-access"
+      ? "cloudflare-access"
+      : "sites";
+
+  return {
+    provider,
+    policyAudience: runtime.POLICY_AUD?.trim() || null,
+    teamDomain: runtime.TEAM_DOMAIN?.trim() || null,
+  };
 }
 
 export async function isAdminEmail(email: string): Promise<boolean> {
-  const adminEmails = await getAdminEmails();
-  if (process.env.NODE_ENV === "development") {
-    if (adminEmails.size === 0 || adminEmails.has("designer@local")) return true;
-  }
-  return adminEmails.has(email.trim().toLowerCase());
+  return (await getAdminEmails()).has(email.trim().toLowerCase());
 }

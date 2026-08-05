@@ -60,13 +60,14 @@ export default async function CoverageBookPrintPage({
   const user = await requireChatGPTUser(
     `/studio/coverage-book/print${query ? `?${query}` : ""}`,
   );
+  const signOutToStudio = await chatGPTSignOutPath("/studio");
 
   if (!(await isAdminEmail(user.email))) {
     return (
       <main className="coverage-print coverage-print-blocked">
         <p>NÉRA ATELIER / DESIGNER ACCESS</p>
         <h1>此账号没有查看覆盖册的权限。</h1>
-        <a href={chatGPTSignOutPath("/studio")}>切换账号 →</a>
+        <a href={signOutToStudio}>切换账号 →</a>
       </main>
     );
   }

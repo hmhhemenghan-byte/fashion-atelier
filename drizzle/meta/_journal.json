@@ -155,6 +155,83 @@
       "when": 1785218104938,
       "tag": "0021_reflective_cerise",
       "breakpoints": true
+    },
+    {
+      "idx": 22,
+      "version": "6",
+      "when": 1785742160603,
+      "tag": "0022_giant_cloak",
+      "breakpoints": true
+    },
+    {
+      "idx": 23,
+      "version": "6",
+      "when": 1785746310774,
+      "tag": "0023_dusty_colonel_america",
+      "breakpoints": true
+    },
+    {
+      "idx": 24,
+      "version": "6",
+      "when": 1785749691255,
+      "tag": "0024_clean_kat_farrell",
+      "breakpoints": true
+    },
+    {
+      "idx": 25,
+      "version": "6",
+      "when": 1785750906080,
+      "tag": "0025_right_venom",
+      "breakpoints": true
+    },
+    {
+      "idx": 26,
+      "version": "6",
+      "when": 1785751949410,
+      "tag": "0026_glorious_alex_wilder",
+      "breakpoints": true
+    },
+    {
+      "idx": 27,
+      "version": "6",
+      "when": 1785768418593,
+      "tag": "0027_clammy_spiral",
+      "breakpoints": true
+    },
+    {
+      "idx": 28,
+      "version": "6",
+      "when": 1785769454675,
+      "tag": "0028_square_ronan",
+      "breakpoints": true
+    },
+    {
+      "idx": 29,
+      "version": "6",
+      "when": 1785770513993,
+      "tag": "0029_famous_gertrude_yorkes",
+      "breakpoints": true
+    },
+    {
+      "idx": 30,
+      "version": "6",
+      "when": 1785771368898,
+      "tag": "0030_bent_bulldozer",
+      "breakpoints": true
+    },
+    {
+      "idx": 31,
+      "version": "6",
+      "when": 1785772547641,
+      "tag": "0031_pretty_sentinels",
+      "breakpoints": true
+    },
+    {
+      "idx": 32,
+      "version": "6",
+      "when": 1785774738501,
+      "tag": "0032_curious_newton_destine",
+      "breakpoints": true
     }
   ]
 }

@@ -37,6 +37,54 @@ import {
   listAllProductionExceptions,
 } from "@/lib/production-exceptions";
 import {
+  listAllProductionAcceptanceChecks,
+  listAllProductionAcceptanceImages,
+  listAllProductionAcceptances,
+} from "@/lib/production-acceptances";
+import {
+  listAllProvenanceDossierChecks,
+  listAllProvenanceDossiers,
+} from "@/lib/provenance-dossiers";
+import {
+  listAllConservationReportChecks,
+  listAllConservationReportImages,
+  listAllConservationReports,
+} from "@/lib/conservation-reports";
+import {
+  listAllExhibitionReadinessChecks,
+  listAllExhibitionReadinessImages,
+  listAllExhibitionReadinessPlans,
+} from "@/lib/exhibition-readiness";
+import {
+  listAllExhibitionWatches,
+  listAllExhibitionWatchObservations,
+  listAllExhibitionWatchImages,
+} from "@/lib/exhibition-watch";
+import {
+  listAllExhibitionRecoveries,
+  listAllExhibitionRecoveryChecks,
+  listAllExhibitionRecoveryImages,
+} from "@/lib/exhibition-recovery";
+import {
+  listAllCuratorialProjects,
+  listAllCuratorialSelections,
+} from "@/lib/archive-curation";
+import {
+  listAllInterpretationLabels,
+  listAllInterpretationPackages,
+  listAllInterpretationSections,
+} from "@/lib/exhibition-interpretation";
+import {
+  listAllExhibitionDeliveryItems,
+  listAllExhibitionDeliveryPackages,
+} from "@/lib/exhibition-delivery";
+import {
+  listAllExhibitionInstallationChecks,
+  listAllExhibitionInstallationGates,
+  listAllExhibitionInstallationImages,
+} from "@/lib/exhibition-installation";
+import { listAllExhibitionOpeningGates, listAllExhibitionOpeningItems } from "@/lib/exhibition-opening";
+import {
   listAllMaterials,
   listAllWorkMaterials,
 } from "@/lib/materials";
@@ -80,8 +128,8 @@ import {
 } from "@/lib/showrooms";
 import { listAllWorkImages, listAllWorks, mediaUrl } from "@/lib/works";
 
-export const ARCHIVE_SCHEMA_VERSION = 16;
-export const ARCHIVE_FORMAT = "nera-archive/16";
+export const ARCHIVE_SCHEMA_VERSION = 27;
+export const ARCHIVE_FORMAT = "nera-archive/27";
 
 export type ArchiveInventory = {
   works: number;
@@ -125,6 +173,35 @@ export type ArchiveInventory = {
   productionReleaseChecks: number;
   productionExceptions: number;
   productionExceptionActions: number;
+  productionAcceptances: number;
+  productionAcceptanceChecks: number;
+  productionAcceptanceImages: number;
+  provenanceDossiers: number;
+  provenanceDossierChecks: number;
+  conservationReports: number;
+  conservationReportChecks: number;
+  conservationReportImages: number;
+  exhibitionReadinessPlans: number;
+  exhibitionReadinessChecks: number;
+  exhibitionReadinessImages: number;
+  exhibitionWatches: number;
+  exhibitionWatchObservations: number;
+  exhibitionWatchImages: number;
+  exhibitionRecoveries: number;
+  exhibitionRecoveryChecks: number;
+  exhibitionRecoveryImages: number;
+  curatorialProjects: number;
+  curatorialSelections: number;
+  interpretationPackages: number;
+  interpretationSections: number;
+  interpretationLabels: number;
+  exhibitionDeliveryPackages: number;
+  exhibitionDeliveryItems: number;
+  exhibitionInstallationGates: number;
+  exhibitionInstallationChecks: number;
+  exhibitionInstallationImages: number;
+  exhibitionOpeningGates: number;
+  exhibitionOpeningItems: number;
   mediaAssets: number;
   mediaBytes: number;
 };
@@ -140,7 +217,13 @@ export type ArchiveMediaItem = {
     | "material"
     | "technical-pack"
     | "fitting"
-    | "sample-signoff";
+    | "sample-signoff"
+    | "production-acceptance"
+    | "conservation"
+    | "exhibition-readiness"
+    | "exhibition-watch"
+    | "exhibition-recovery"
+    | "exhibition-installation";
   recordId: string;
   parentId: string | null;
   title: string;
@@ -241,6 +324,53 @@ export type ArchiveBundle = {
     productionExceptionActions: Awaited<
       ReturnType<typeof listAllProductionExceptionActions>
     >;
+    productionAcceptances: Awaited<
+      ReturnType<typeof listAllProductionAcceptances>
+    >;
+    productionAcceptanceChecks: Awaited<
+      ReturnType<typeof listAllProductionAcceptanceChecks>
+    >;
+    productionAcceptanceImages: Awaited<
+      ReturnType<typeof listAllProductionAcceptanceImages>
+    >;
+    provenanceDossiers: Awaited<ReturnType<typeof listAllProvenanceDossiers>>;
+    provenanceDossierChecks: Awaited<
+      ReturnType<typeof listAllProvenanceDossierChecks>
+    >;
+    conservationReports: Awaited<ReturnType<typeof listAllConservationReports>>;
+    conservationReportChecks: Awaited<
+      ReturnType<typeof listAllConservationReportChecks>
+    >;
+    conservationReportImages: Awaited<
+      ReturnType<typeof listAllConservationReportImages>
+    >;
+    exhibitionReadinessPlans: Awaited<
+      ReturnType<typeof listAllExhibitionReadinessPlans>
+    >;
+    exhibitionReadinessChecks: Awaited<
+      ReturnType<typeof listAllExhibitionReadinessChecks>
+    >;
+    exhibitionReadinessImages: Awaited<
+      ReturnType<typeof listAllExhibitionReadinessImages>
+    >;
+    exhibitionWatches: Awaited<ReturnType<typeof listAllExhibitionWatches>>;
+    exhibitionWatchObservations: Awaited<ReturnType<typeof listAllExhibitionWatchObservations>>;
+    exhibitionWatchImages: Awaited<ReturnType<typeof listAllExhibitionWatchImages>>;
+    exhibitionRecoveries: Awaited<ReturnType<typeof listAllExhibitionRecoveries>>;
+    exhibitionRecoveryChecks: Awaited<ReturnType<typeof listAllExhibitionRecoveryChecks>>;
+    exhibitionRecoveryImages: Awaited<ReturnType<typeof listAllExhibitionRecoveryImages>>;
+    curatorialProjects: Awaited<ReturnType<typeof listAllCuratorialProjects>>;
+    curatorialSelections: Awaited<ReturnType<typeof listAllCuratorialSelections>>;
+    interpretationPackages: Awaited<ReturnType<typeof listAllInterpretationPackages>>;
+    interpretationSections: Awaited<ReturnType<typeof listAllInterpretationSections>>;
+    interpretationLabels: Awaited<ReturnType<typeof listAllInterpretationLabels>>;
+    exhibitionDeliveryPackages: Awaited<ReturnType<typeof listAllExhibitionDeliveryPackages>>;
+    exhibitionDeliveryItems: Awaited<ReturnType<typeof listAllExhibitionDeliveryItems>>;
+    exhibitionInstallationGates: Awaited<ReturnType<typeof listAllExhibitionInstallationGates>>;
+    exhibitionInstallationChecks: Awaited<ReturnType<typeof listAllExhibitionInstallationChecks>>;
+    exhibitionInstallationImages: Awaited<ReturnType<typeof listAllExhibitionInstallationImages>>;
+    exhibitionOpeningGates: Awaited<ReturnType<typeof listAllExhibitionOpeningGates>>;
+    exhibitionOpeningItems: Awaited<ReturnType<typeof listAllExhibitionOpeningItems>>;
   };
   mediaManifest: ArchiveMediaItem[];
   editorialQa: EditorialOverview;
@@ -293,6 +423,35 @@ export type ArchiveDelta = {
   productionReleaseChecks: number;
   productionExceptions: number;
   productionExceptionActions: number;
+  productionAcceptances: number;
+  productionAcceptanceChecks: number;
+  productionAcceptanceImages: number;
+  provenanceDossiers: number;
+  provenanceDossierChecks: number;
+  conservationReports: number;
+  conservationReportChecks: number;
+  conservationReportImages: number;
+  exhibitionReadinessPlans: number;
+  exhibitionReadinessChecks: number;
+  exhibitionReadinessImages: number;
+  exhibitionWatches: number;
+  exhibitionWatchObservations: number;
+  exhibitionWatchImages: number;
+  exhibitionRecoveries: number;
+  exhibitionRecoveryChecks: number;
+  exhibitionRecoveryImages: number;
+  curatorialProjects: number;
+  curatorialSelections: number;
+  interpretationPackages: number;
+  interpretationSections: number;
+  interpretationLabels: number;
+  exhibitionDeliveryPackages: number;
+  exhibitionDeliveryItems: number;
+  exhibitionInstallationGates: number;
+  exhibitionInstallationChecks: number;
+  exhibitionInstallationImages: number;
+  exhibitionOpeningGates: number;
+  exhibitionOpeningItems: number;
   mediaAssets: number;
   mediaBytes: number;
 };
@@ -365,6 +524,35 @@ export async function buildArchiveBundle(
     productionReleaseCheckRows,
     productionExceptionRows,
     productionExceptionActionRows,
+    productionAcceptanceRows,
+    productionAcceptanceCheckRows,
+    productionAcceptanceImageRows,
+    provenanceDossierRows,
+    provenanceDossierCheckRows,
+    conservationReportRows,
+    conservationReportCheckRows,
+    conservationReportImageRows,
+    exhibitionReadinessPlanRows,
+    exhibitionReadinessCheckRows,
+    exhibitionReadinessImageRows,
+    exhibitionWatchRows,
+    exhibitionWatchObservationRows,
+    exhibitionWatchImageRows,
+    exhibitionRecoveryRows,
+    exhibitionRecoveryCheckRows,
+    exhibitionRecoveryImageRows,
+    curatorialProjectRows,
+    curatorialSelectionRows,
+    interpretationPackageRows,
+    interpretationSectionRows,
+    interpretationLabelRows,
+    exhibitionDeliveryPackageRows,
+    exhibitionDeliveryItemRows,
+    exhibitionInstallationGateRows,
+    exhibitionInstallationCheckRows,
+    exhibitionInstallationImageRows,
+    exhibitionOpeningGateRows,
+    exhibitionOpeningItemRows,
     editorialQa,
   ] = await Promise.all([
     listAllWorks(1000),
@@ -408,6 +596,35 @@ export async function buildArchiveBundle(
     listAllProductionReleaseChecks(),
     listAllProductionExceptions(),
     listAllProductionExceptionActions(),
+    listAllProductionAcceptances(),
+    listAllProductionAcceptanceChecks(),
+    listAllProductionAcceptanceImages(),
+    listAllProvenanceDossiers(),
+    listAllProvenanceDossierChecks(),
+    listAllConservationReports(),
+    listAllConservationReportChecks(),
+    listAllConservationReportImages(),
+    listAllExhibitionReadinessPlans(),
+    listAllExhibitionReadinessChecks(),
+    listAllExhibitionReadinessImages(),
+    listAllExhibitionWatches(),
+    listAllExhibitionWatchObservations(),
+    listAllExhibitionWatchImages(),
+    listAllExhibitionRecoveries(),
+    listAllExhibitionRecoveryChecks(),
+    listAllExhibitionRecoveryImages(),
+    listAllCuratorialProjects(),
+    listAllCuratorialSelections(),
+    listAllInterpretationPackages(),
+    listAllInterpretationSections(),
+    listAllInterpretationLabels(),
+    listAllExhibitionDeliveryPackages(),
+    listAllExhibitionDeliveryItems(),
+    listAllExhibitionInstallationGates(),
+    listAllExhibitionInstallationChecks(),
+    listAllExhibitionInstallationImages(),
+    listAllExhibitionOpeningGates(),
+    listAllExhibitionOpeningItems(),
     getEditorialOverview(),
   ]);
 
@@ -426,6 +643,18 @@ export async function buildArchiveBundle(
     fittingSessions: fittingSessionRows,
     sampleSignoffImages: sampleSignoffImageRows,
     sampleSignoffs: sampleSignoffRows,
+    productionAcceptances: productionAcceptanceRows,
+    productionAcceptanceImages: productionAcceptanceImageRows,
+    conservationReports: conservationReportRows,
+    conservationReportImages: conservationReportImageRows,
+    exhibitionReadinessPlans: exhibitionReadinessPlanRows,
+    exhibitionReadinessImages: exhibitionReadinessImageRows,
+    exhibitionWatches: exhibitionWatchRows,
+    exhibitionWatchImages: exhibitionWatchImageRows,
+    exhibitionRecoveries: exhibitionRecoveryRows,
+    exhibitionRecoveryImages: exhibitionRecoveryImageRows,
+    exhibitionInstallationGates: exhibitionInstallationGateRows,
+    exhibitionInstallationImages: exhibitionInstallationImageRows,
     workById,
   });
   const datasets = {
@@ -470,6 +699,35 @@ export async function buildArchiveBundle(
     productionReleaseChecks: productionReleaseCheckRows,
     productionExceptions: productionExceptionRows,
     productionExceptionActions: productionExceptionActionRows,
+    productionAcceptances: productionAcceptanceRows,
+    productionAcceptanceChecks: productionAcceptanceCheckRows,
+    productionAcceptanceImages: productionAcceptanceImageRows,
+    provenanceDossiers: provenanceDossierRows,
+    provenanceDossierChecks: provenanceDossierCheckRows,
+    conservationReports: conservationReportRows,
+    conservationReportChecks: conservationReportCheckRows,
+    conservationReportImages: conservationReportImageRows,
+    exhibitionReadinessPlans: exhibitionReadinessPlanRows,
+    exhibitionReadinessChecks: exhibitionReadinessCheckRows,
+    exhibitionReadinessImages: exhibitionReadinessImageRows,
+    exhibitionWatches: exhibitionWatchRows,
+    exhibitionWatchObservations: exhibitionWatchObservationRows,
+    exhibitionWatchImages: exhibitionWatchImageRows,
+    exhibitionRecoveries: exhibitionRecoveryRows,
+    exhibitionRecoveryChecks: exhibitionRecoveryCheckRows,
+    exhibitionRecoveryImages: exhibitionRecoveryImageRows,
+    curatorialProjects: curatorialProjectRows,
+    curatorialSelections: curatorialSelectionRows,
+    interpretationPackages: interpretationPackageRows,
+    interpretationSections: interpretationSectionRows,
+    interpretationLabels: interpretationLabelRows,
+    exhibitionDeliveryPackages: exhibitionDeliveryPackageRows,
+    exhibitionDeliveryItems: exhibitionDeliveryItemRows,
+    exhibitionInstallationGates: exhibitionInstallationGateRows,
+    exhibitionInstallationChecks: exhibitionInstallationCheckRows,
+    exhibitionInstallationImages: exhibitionInstallationImageRows,
+    exhibitionOpeningGates: exhibitionOpeningGateRows,
+    exhibitionOpeningItems: exhibitionOpeningItemRows,
   };
   const inventory: ArchiveInventory = {
     works: workRows.length,
@@ -513,6 +771,35 @@ export async function buildArchiveBundle(
     productionReleaseChecks: productionReleaseCheckRows.length,
     productionExceptions: productionExceptionRows.length,
     productionExceptionActions: productionExceptionActionRows.length,
+    productionAcceptances: productionAcceptanceRows.length,
+    productionAcceptanceChecks: productionAcceptanceCheckRows.length,
+    productionAcceptanceImages: productionAcceptanceImageRows.length,
+    provenanceDossiers: provenanceDossierRows.length,
+    provenanceDossierChecks: provenanceDossierCheckRows.length,
+    conservationReports: conservationReportRows.length,
+    conservationReportChecks: conservationReportCheckRows.length,
+    conservationReportImages: conservationReportImageRows.length,
+    exhibitionReadinessPlans: exhibitionReadinessPlanRows.length,
+    exhibitionReadinessChecks: exhibitionReadinessCheckRows.length,
+    exhibitionReadinessImages: exhibitionReadinessImageRows.length,
+    exhibitionWatches: exhibitionWatchRows.length,
+    exhibitionWatchObservations: exhibitionWatchObservationRows.length,
+    exhibitionWatchImages: exhibitionWatchImageRows.length,
+    exhibitionRecoveries: exhibitionRecoveryRows.length,
+    exhibitionRecoveryChecks: exhibitionRecoveryCheckRows.length,
+    exhibitionRecoveryImages: exhibitionRecoveryImageRows.length,
+    curatorialProjects: curatorialProjectRows.length,
+    curatorialSelections: curatorialSelectionRows.length,
+    interpretationPackages: interpretationPackageRows.length,
+    interpretationSections: interpretationSectionRows.length,
+    interpretationLabels: interpretationLabelRows.length,
+    exhibitionDeliveryPackages: exhibitionDeliveryPackageRows.length,
+    exhibitionDeliveryItems: exhibitionDeliveryItemRows.length,
+    exhibitionInstallationGates: exhibitionInstallationGateRows.length,
+    exhibitionInstallationChecks: exhibitionInstallationCheckRows.length,
+    exhibitionInstallationImages: exhibitionInstallationImageRows.length,
+    exhibitionOpeningGates: exhibitionOpeningGateRows.length,
+    exhibitionOpeningItems: exhibitionOpeningItemRows.length,
     mediaAssets: mediaManifest.length,
     mediaBytes: mediaManifest.reduce((total, item) => total + item.bytes, 0),
   };
@@ -610,7 +897,7 @@ export async function getArchiveHandoffOverview(
       {
         id: "bundle",
         label: "完整结构化数据包",
-        detail: `已覆盖 ${bundle.inventory.works} 件作品、${bundle.inventory.collections} 个系列、${bundle.inventory.materials} 项材料与 ${bundle.inventory.workMaterials} 条 Look 用料、${bundle.inventory.technicalPacks} 个技术包、${bundle.inventory.techPackMeasurements} 条尺寸规格与 ${bundle.inventory.techPackConstructionNotes} 条工艺说明、${bundle.inventory.fittingSessions} 轮试身、${bundle.inventory.fittingIssues} 条版型问题与 ${bundle.inventory.fittingImages} 张私密试身证据、${bundle.inventory.sampleSignoffs} 次封样签核、${bundle.inventory.sampleSignoffChecks} 条人工核对与 ${bundle.inventory.sampleSignoffImages} 张私密封样证据、${bundle.inventory.productionReleases} 份生产放行包与 ${bundle.inventory.productionReleaseChecks} 条准备核对、${bundle.inventory.productionExceptions} 条生产偏差与 ${bundle.inventory.productionExceptionActions} 条人工处置记录、${bundle.inventory.publications} 个发布包、${bundle.inventory.calendarEvents} 条保存排期、${bundle.inventory.designReviews} 次设计评审与 ${bundle.inventory.designReviewActions} 项修改任务、${bundle.inventory.showrooms} 个私享展厅、${bundle.inventory.showroomRequests} 条专业回应、${bundle.inventory.sampleLoans} 条样衣借调、${bundle.inventory.samplePlacements} 条成果记录、${bundle.inventory.sampleCommunications} 条沟通记录、${bundle.inventory.sampleAssets} 件实物资产、${bundle.inventory.sampleAudits} 次盘点，以及 ${bundle.inventory.relationshipContacts} 位联系人、${bundle.inventory.relationshipOpportunities} 个机会、${bundle.inventory.relationshipActivities} 条互动或待办、${bundle.inventory.outreachCampaigns} 个外联活动与 ${bundle.inventory.outreachRecipients} 个独立审核对象。`,
+        detail: `已覆盖 ${bundle.inventory.works} 件作品、${bundle.inventory.collections} 个系列、${bundle.inventory.materials} 项材料与 ${bundle.inventory.workMaterials} 条 Look 用料、${bundle.inventory.technicalPacks} 个技术包、${bundle.inventory.techPackMeasurements} 条尺寸规格与 ${bundle.inventory.techPackConstructionNotes} 条工艺说明、${bundle.inventory.fittingSessions} 轮试身、${bundle.inventory.fittingIssues} 条版型问题与 ${bundle.inventory.fittingImages} 张私密试身证据、${bundle.inventory.sampleSignoffs} 次封样签核、${bundle.inventory.sampleSignoffChecks} 条人工核对与 ${bundle.inventory.sampleSignoffImages} 张私密封样证据、${bundle.inventory.productionReleases} 份生产放行包与 ${bundle.inventory.productionReleaseChecks} 条准备核对、${bundle.inventory.productionExceptions} 条生产偏差与 ${bundle.inventory.productionExceptionActions} 条人工处置记录、${bundle.inventory.productionAcceptances} 次成衣验收、${bundle.inventory.productionAcceptanceChecks} 条实物核对与 ${bundle.inventory.productionAcceptanceImages} 张私密验收证据、${bundle.inventory.provenanceDossiers} 份成衣溯源档案与 ${bundle.inventory.provenanceDossierChecks} 条公开核对、${bundle.inventory.conservationReports} 份养护报告、${bundle.inventory.conservationReportChecks} 条状态检查与 ${bundle.inventory.conservationReportImages} 张私密养护证据、${bundle.inventory.exhibitionReadinessPlans} 份展陈方案、${bundle.inventory.exhibitionReadinessChecks} 条安全核对与 ${bundle.inventory.exhibitionReadinessImages} 张私密试装证据、${bundle.inventory.exhibitionWatches} 条展期监测、${bundle.inventory.exhibitionWatchObservations} 条现场观察与 ${bundle.inventory.exhibitionWatchImages} 张私密监测证据、${bundle.inventory.exhibitionRecoveries} 条展后复原、${bundle.inventory.exhibitionRecoveryChecks} 条复原核对与 ${bundle.inventory.exhibitionRecoveryImages} 张私密接收证据、${bundle.inventory.curatorialProjects} 个策展项目与 ${bundle.inventory.curatorialSelections} 条实物选择、${bundle.inventory.publications} 个发布包、${bundle.inventory.calendarEvents} 条保存排期、${bundle.inventory.designReviews} 次设计评审与 ${bundle.inventory.designReviewActions} 项修改任务、${bundle.inventory.showrooms} 个私享展厅、${bundle.inventory.showroomRequests} 条专业回应、${bundle.inventory.sampleLoans} 条样衣借调、${bundle.inventory.samplePlacements} 条成果记录、${bundle.inventory.sampleCommunications} 条沟通记录、${bundle.inventory.sampleAssets} 件实物资产、${bundle.inventory.sampleAudits} 次盘点，以及 ${bundle.inventory.relationshipContacts} 位联系人、${bundle.inventory.relationshipOpportunities} 个机会、${bundle.inventory.relationshipActivities} 条互动或待办、${bundle.inventory.outreachCampaigns} 个外联活动与 ${bundle.inventory.outreachRecipients} 个独立审核对象。`,
         status: "ready",
       },
       {
@@ -699,6 +986,45 @@ export async function listArchiveSnapshots(
       productionExceptionCount: archiveSnapshots.productionExceptionCount,
       productionExceptionActionCount:
         archiveSnapshots.productionExceptionActionCount,
+      productionAcceptanceCount:
+        archiveSnapshots.productionAcceptanceCount,
+      productionAcceptanceCheckCount:
+        archiveSnapshots.productionAcceptanceCheckCount,
+      productionAcceptanceImageCount:
+        archiveSnapshots.productionAcceptanceImageCount,
+      provenanceDossierCount: archiveSnapshots.provenanceDossierCount,
+      provenanceDossierCheckCount:
+        archiveSnapshots.provenanceDossierCheckCount,
+      conservationReportCount: archiveSnapshots.conservationReportCount,
+      conservationReportCheckCount:
+        archiveSnapshots.conservationReportCheckCount,
+      conservationReportImageCount:
+        archiveSnapshots.conservationReportImageCount,
+      exhibitionReadinessPlanCount:
+        archiveSnapshots.exhibitionReadinessPlanCount,
+      exhibitionReadinessCheckCount:
+        archiveSnapshots.exhibitionReadinessCheckCount,
+      exhibitionReadinessImageCount:
+        archiveSnapshots.exhibitionReadinessImageCount,
+      exhibitionWatchCount: archiveSnapshots.exhibitionWatchCount,
+      exhibitionWatchObservationCount:
+        archiveSnapshots.exhibitionWatchObservationCount,
+      exhibitionWatchImageCount: archiveSnapshots.exhibitionWatchImageCount,
+      exhibitionRecoveryCount: archiveSnapshots.exhibitionRecoveryCount,
+      exhibitionRecoveryCheckCount: archiveSnapshots.exhibitionRecoveryCheckCount,
+      exhibitionRecoveryImageCount: archiveSnapshots.exhibitionRecoveryImageCount,
+      curatorialProjectCount: archiveSnapshots.curatorialProjectCount,
+      curatorialSelectionCount: archiveSnapshots.curatorialSelectionCount,
+      interpretationPackageCount: archiveSnapshots.interpretationPackageCount,
+      interpretationSectionCount: archiveSnapshots.interpretationSectionCount,
+      interpretationLabelCount: archiveSnapshots.interpretationLabelCount,
+      exhibitionDeliveryPackageCount: archiveSnapshots.exhibitionDeliveryPackageCount,
+      exhibitionDeliveryItemCount: archiveSnapshots.exhibitionDeliveryItemCount,
+      exhibitionInstallationGateCount: archiveSnapshots.exhibitionInstallationGateCount,
+      exhibitionInstallationCheckCount: archiveSnapshots.exhibitionInstallationCheckCount,
+      exhibitionInstallationImageCount: archiveSnapshots.exhibitionInstallationImageCount,
+      exhibitionOpeningGateCount: archiveSnapshots.exhibitionOpeningGateCount,
+      exhibitionOpeningItemCount: archiveSnapshots.exhibitionOpeningItemCount,
       mediaCount: archiveSnapshots.mediaCount,
       mediaBytes: archiveSnapshots.mediaBytes,
       createdBy: archiveSnapshots.createdBy,
@@ -767,6 +1093,35 @@ export function toArchiveSnapshotSummary(
     productionReleaseCheckCount: snapshot.productionReleaseCheckCount,
     productionExceptionCount: snapshot.productionExceptionCount,
     productionExceptionActionCount: snapshot.productionExceptionActionCount,
+    productionAcceptanceCount: snapshot.productionAcceptanceCount,
+    productionAcceptanceCheckCount: snapshot.productionAcceptanceCheckCount,
+    productionAcceptanceImageCount: snapshot.productionAcceptanceImageCount,
+    provenanceDossierCount: snapshot.provenanceDossierCount,
+    provenanceDossierCheckCount: snapshot.provenanceDossierCheckCount,
+    conservationReportCount: snapshot.conservationReportCount,
+    conservationReportCheckCount: snapshot.conservationReportCheckCount,
+    conservationReportImageCount: snapshot.conservationReportImageCount,
+    exhibitionReadinessPlanCount: snapshot.exhibitionReadinessPlanCount,
+    exhibitionReadinessCheckCount: snapshot.exhibitionReadinessCheckCount,
+    exhibitionReadinessImageCount: snapshot.exhibitionReadinessImageCount,
+    exhibitionWatchCount: snapshot.exhibitionWatchCount,
+    exhibitionWatchObservationCount: snapshot.exhibitionWatchObservationCount,
+    exhibitionWatchImageCount: snapshot.exhibitionWatchImageCount,
+    exhibitionRecoveryCount: snapshot.exhibitionRecoveryCount,
+    exhibitionRecoveryCheckCount: snapshot.exhibitionRecoveryCheckCount,
+    exhibitionRecoveryImageCount: snapshot.exhibitionRecoveryImageCount,
+    curatorialProjectCount: snapshot.curatorialProjectCount,
+    curatorialSelectionCount: snapshot.curatorialSelectionCount,
+    interpretationPackageCount: snapshot.interpretationPackageCount,
+    interpretationSectionCount: snapshot.interpretationSectionCount,
+    interpretationLabelCount: snapshot.interpretationLabelCount,
+    exhibitionDeliveryPackageCount: snapshot.exhibitionDeliveryPackageCount,
+    exhibitionDeliveryItemCount: snapshot.exhibitionDeliveryItemCount,
+    exhibitionInstallationGateCount: snapshot.exhibitionInstallationGateCount,
+    exhibitionInstallationCheckCount: snapshot.exhibitionInstallationCheckCount,
+    exhibitionInstallationImageCount: snapshot.exhibitionInstallationImageCount,
+    exhibitionOpeningGateCount: snapshot.exhibitionOpeningGateCount,
+    exhibitionOpeningItemCount: snapshot.exhibitionOpeningItemCount,
     mediaCount: snapshot.mediaCount,
     mediaBytes: snapshot.mediaBytes,
     createdBy: snapshot.createdBy,
@@ -829,6 +1184,37 @@ export async function createArchiveSnapshot(input: {
     productionExceptionCount: bundle.inventory.productionExceptions,
     productionExceptionActionCount:
       bundle.inventory.productionExceptionActions,
+    productionAcceptanceCount: bundle.inventory.productionAcceptances,
+    productionAcceptanceCheckCount:
+      bundle.inventory.productionAcceptanceChecks,
+    productionAcceptanceImageCount:
+      bundle.inventory.productionAcceptanceImages,
+    provenanceDossierCount: bundle.inventory.provenanceDossiers,
+    provenanceDossierCheckCount: bundle.inventory.provenanceDossierChecks,
+    conservationReportCount: bundle.inventory.conservationReports,
+    conservationReportCheckCount: bundle.inventory.conservationReportChecks,
+    conservationReportImageCount: bundle.inventory.conservationReportImages,
+    exhibitionReadinessPlanCount: bundle.inventory.exhibitionReadinessPlans,
+    exhibitionReadinessCheckCount: bundle.inventory.exhibitionReadinessChecks,
+    exhibitionReadinessImageCount: bundle.inventory.exhibitionReadinessImages,
+    exhibitionWatchCount: bundle.inventory.exhibitionWatches,
+    exhibitionWatchObservationCount: bundle.inventory.exhibitionWatchObservations,
+    exhibitionWatchImageCount: bundle.inventory.exhibitionWatchImages,
+    exhibitionRecoveryCount: bundle.inventory.exhibitionRecoveries,
+    exhibitionRecoveryCheckCount: bundle.inventory.exhibitionRecoveryChecks,
+    exhibitionRecoveryImageCount: bundle.inventory.exhibitionRecoveryImages,
+    curatorialProjectCount: bundle.inventory.curatorialProjects,
+    curatorialSelectionCount: bundle.inventory.curatorialSelections,
+    interpretationPackageCount: bundle.inventory.interpretationPackages,
+    interpretationSectionCount: bundle.inventory.interpretationSections,
+    interpretationLabelCount: bundle.inventory.interpretationLabels,
+    exhibitionDeliveryPackageCount: bundle.inventory.exhibitionDeliveryPackages,
+    exhibitionDeliveryItemCount: bundle.inventory.exhibitionDeliveryItems,
+    exhibitionInstallationGateCount: bundle.inventory.exhibitionInstallationGates,
+    exhibitionInstallationCheckCount: bundle.inventory.exhibitionInstallationChecks,
+    exhibitionInstallationImageCount: bundle.inventory.exhibitionInstallationImages,
+    exhibitionOpeningGateCount: bundle.inventory.exhibitionOpeningGates,
+    exhibitionOpeningItemCount: bundle.inventory.exhibitionOpeningItems,
     mediaCount: bundle.inventory.mediaAssets,
     mediaBytes: bundle.inventory.mediaBytes,
     createdBy: input.createdBy,
@@ -880,6 +1266,28 @@ function buildMediaManifest(input: {
   sampleSignoffImages: Awaited<
     ReturnType<typeof listAllSampleSignoffImages>
   >;
+  productionAcceptances: Awaited<
+    ReturnType<typeof listAllProductionAcceptances>
+  >;
+  productionAcceptanceImages: Awaited<
+    ReturnType<typeof listAllProductionAcceptanceImages>
+  >;
+  conservationReports: Awaited<ReturnType<typeof listAllConservationReports>>;
+  conservationReportImages: Awaited<
+    ReturnType<typeof listAllConservationReportImages>
+  >;
+  exhibitionReadinessPlans: Awaited<
+    ReturnType<typeof listAllExhibitionReadinessPlans>
+  >;
+  exhibitionReadinessImages: Awaited<
+    ReturnType<typeof listAllExhibitionReadinessImages>
+  >;
+  exhibitionWatches: Awaited<ReturnType<typeof listAllExhibitionWatches>>;
+  exhibitionWatchImages: Awaited<ReturnType<typeof listAllExhibitionWatchImages>>;
+  exhibitionRecoveries: Awaited<ReturnType<typeof listAllExhibitionRecoveries>>;
+  exhibitionRecoveryImages: Awaited<ReturnType<typeof listAllExhibitionRecoveryImages>>;
+  exhibitionInstallationGates: Awaited<ReturnType<typeof listAllExhibitionInstallationGates>>;
+  exhibitionInstallationImages: Awaited<ReturnType<typeof listAllExhibitionInstallationImages>>;
   workById: Map<
     string,
     Awaited<ReturnType<typeof listAllWorks>>[number]
@@ -891,6 +1299,24 @@ function buildMediaManifest(input: {
   );
   const sampleSignoffById = new Map(
     input.sampleSignoffs.map((signoff) => [signoff.id, signoff]),
+  );
+  const productionAcceptanceById = new Map(
+    input.productionAcceptances.map((acceptance) => [acceptance.id, acceptance]),
+  );
+  const conservationReportById = new Map(
+    input.conservationReports.map((report) => [report.id, report]),
+  );
+  const exhibitionReadinessPlanById = new Map(
+    input.exhibitionReadinessPlans.map((plan) => [plan.id, plan]),
+  );
+  const exhibitionWatchById = new Map(
+    input.exhibitionWatches.map((watch) => [watch.id, watch]),
+  );
+  const exhibitionRecoveryById = new Map(
+    input.exhibitionRecoveries.map((recovery) => [recovery.id, recovery]),
+  );
+  const exhibitionInstallationGateById = new Map(
+    input.exhibitionInstallationGates.map((gate) => [gate.id, gate]),
   );
   input.works.forEach((work) => {
     items.push(
@@ -1084,6 +1510,136 @@ function buildMediaManifest(input: {
       }),
     );
   });
+  input.productionAcceptanceImages.forEach((image) => {
+    const acceptance = productionAcceptanceById.get(
+      image.productionAcceptanceId,
+    );
+    const work = acceptance ? input.workById.get(acceptance.workId) : null;
+    items.push(
+      mediaItem({
+        origin: input.origin,
+        id: `production-acceptance:${image.id}`,
+        kind: "production-acceptance",
+        recordId: image.id,
+        parentId: image.productionAcceptanceId,
+        title: `${acceptance?.acceptanceCode ?? "Edition Acceptance"} / ${work?.title ?? image.angle}`,
+        altText: image.altText,
+        objectKey: image.imageKey,
+        contentType: image.imageType,
+        bytes: image.imageSize,
+        status: "draft",
+        createdAt: image.createdAt,
+        updatedAt: image.updatedAt,
+      }),
+    );
+  });
+  input.conservationReportImages.forEach((image) => {
+    const report = conservationReportById.get(image.conservationReportId);
+    const work = report?.workId ? input.workById.get(report.workId) : null;
+    items.push(
+      mediaItem({
+        origin: input.origin,
+        id: `conservation:${image.id}`,
+        kind: "conservation",
+        recordId: image.id,
+        parentId: image.conservationReportId,
+        title: `${report?.reportCode ?? "Conservation"} / ${work?.title ?? image.angle}`,
+        altText: image.altText,
+        objectKey: image.imageKey,
+        contentType: image.imageType,
+        bytes: image.imageSize,
+        status: "draft",
+        createdAt: image.createdAt,
+        updatedAt: image.updatedAt,
+      }),
+    );
+  });
+  input.exhibitionReadinessImages.forEach((image) => {
+    const plan = exhibitionReadinessPlanById.get(image.exhibitionReadinessPlanId);
+    const work = plan?.workId ? input.workById.get(plan.workId) : null;
+    items.push(
+      mediaItem({
+        origin: input.origin,
+        id: `exhibition-readiness:${image.id}`,
+        kind: "exhibition-readiness",
+        recordId: image.id,
+        parentId: image.exhibitionReadinessPlanId,
+        title: `${plan?.planCode ?? "Exhibition Readiness"} / ${work?.title ?? image.angle}`,
+        altText: image.altText,
+        objectKey: image.imageKey,
+        contentType: image.imageType,
+        bytes: image.imageSize,
+        status: "draft",
+        createdAt: image.createdAt,
+        updatedAt: image.updatedAt,
+      }),
+    );
+  });
+  input.exhibitionWatchImages.forEach((image) => {
+    const watch = exhibitionWatchById.get(image.exhibitionWatchId);
+    const plan = watch ? exhibitionReadinessPlanById.get(watch.exhibitionReadinessPlanId) : null;
+    const work = plan?.workId ? input.workById.get(plan.workId) : null;
+    items.push(
+      mediaItem({
+        origin: input.origin,
+        id: `exhibition-watch:${image.id}`,
+        kind: "exhibition-watch",
+        recordId: image.id,
+        parentId: image.exhibitionWatchId,
+        title: `${watch?.watchCode ?? "Exhibition Watch"} / ${work?.title ?? image.angle}`,
+        altText: image.altText,
+        objectKey: image.imageKey,
+        contentType: image.imageType,
+        bytes: image.imageSize,
+        status: "draft",
+        createdAt: image.createdAt,
+        updatedAt: image.updatedAt,
+      }),
+    );
+  });
+  input.exhibitionRecoveryImages.forEach((image) => {
+    const recovery = exhibitionRecoveryById.get(image.exhibitionRecoveryId);
+    const watch = recovery ? exhibitionWatchById.get(recovery.exhibitionWatchId) : null;
+    const plan = watch ? exhibitionReadinessPlanById.get(watch.exhibitionReadinessPlanId) : null;
+    const work = plan?.workId ? input.workById.get(plan.workId) : null;
+    items.push(
+      mediaItem({
+        origin: input.origin,
+        id: `exhibition-recovery:${image.id}`,
+        kind: "exhibition-recovery",
+        recordId: image.id,
+        parentId: image.exhibitionRecoveryId,
+        title: `${recovery?.recoveryCode ?? "Exhibition Recovery"} / ${work?.title ?? image.angle}`,
+        altText: image.altText,
+        objectKey: image.imageKey,
+        contentType: image.imageType,
+        bytes: image.imageSize,
+        status: "draft",
+        createdAt: image.createdAt,
+        updatedAt: image.updatedAt,
+      }),
+    );
+  });
+  input.exhibitionInstallationImages.forEach((image) => {
+    const gate = exhibitionInstallationGateById.get(image.exhibitionInstallationGateId);
+    items.push(
+      mediaItem({
+        origin: input.origin,
+        id: `exhibition-installation:${image.id}`,
+        kind: "exhibition-installation",
+        recordId: image.id,
+        parentId: image.exhibitionInstallationGateId,
+        title: `${gate?.gateCode ?? "Exhibition Installation"} / ${image.angle}`,
+        altText: image.altText,
+        objectKey: image.imageKey,
+        contentType: image.imageType,
+        bytes: image.imageSize,
+        status: "draft",
+        createdAt: image.createdAt,
+        updatedAt: image.updatedAt,
+      }),
+    );
+  });
   return items.sort(
     (left, right) =>
       left.objectKey.localeCompare(right.objectKey) ||
@@ -1190,6 +1746,66 @@ function createDelta(
     productionExceptionActions:
       inventory.productionExceptionActions -
       snapshot.productionExceptionActionCount,
+    productionAcceptances:
+      inventory.productionAcceptances - snapshot.productionAcceptanceCount,
+    productionAcceptanceChecks:
+      inventory.productionAcceptanceChecks -
+      snapshot.productionAcceptanceCheckCount,
+    productionAcceptanceImages:
+      inventory.productionAcceptanceImages -
+      snapshot.productionAcceptanceImageCount,
+    provenanceDossiers:
+      inventory.provenanceDossiers - snapshot.provenanceDossierCount,
+    provenanceDossierChecks:
+      inventory.provenanceDossierChecks - snapshot.provenanceDossierCheckCount,
+    conservationReports:
+      inventory.conservationReports - snapshot.conservationReportCount,
+    conservationReportChecks:
+      inventory.conservationReportChecks - snapshot.conservationReportCheckCount,
+    conservationReportImages:
+      inventory.conservationReportImages - snapshot.conservationReportImageCount,
+    exhibitionReadinessPlans:
+      inventory.exhibitionReadinessPlans - snapshot.exhibitionReadinessPlanCount,
+    exhibitionReadinessChecks:
+      inventory.exhibitionReadinessChecks - snapshot.exhibitionReadinessCheckCount,
+    exhibitionReadinessImages:
+      inventory.exhibitionReadinessImages - snapshot.exhibitionReadinessImageCount,
+    exhibitionWatches:
+      inventory.exhibitionWatches - snapshot.exhibitionWatchCount,
+    exhibitionWatchObservations:
+      inventory.exhibitionWatchObservations - snapshot.exhibitionWatchObservationCount,
+    exhibitionWatchImages:
+      inventory.exhibitionWatchImages - snapshot.exhibitionWatchImageCount,
+    exhibitionRecoveries:
+      inventory.exhibitionRecoveries - snapshot.exhibitionRecoveryCount,
+    exhibitionRecoveryChecks:
+      inventory.exhibitionRecoveryChecks - snapshot.exhibitionRecoveryCheckCount,
+    exhibitionRecoveryImages:
+      inventory.exhibitionRecoveryImages - snapshot.exhibitionRecoveryImageCount,
+    curatorialProjects:
+      inventory.curatorialProjects - snapshot.curatorialProjectCount,
+    curatorialSelections:
+      inventory.curatorialSelections - snapshot.curatorialSelectionCount,
+    interpretationPackages:
+      inventory.interpretationPackages - snapshot.interpretationPackageCount,
+    interpretationSections:
+      inventory.interpretationSections - snapshot.interpretationSectionCount,
+    interpretationLabels:
+      inventory.interpretationLabels - snapshot.interpretationLabelCount,
+    exhibitionDeliveryPackages:
+      inventory.exhibitionDeliveryPackages - snapshot.exhibitionDeliveryPackageCount,
+    exhibitionDeliveryItems:
+      inventory.exhibitionDeliveryItems - snapshot.exhibitionDeliveryItemCount,
+    exhibitionInstallationGates:
+      inventory.exhibitionInstallationGates - snapshot.exhibitionInstallationGateCount,
+    exhibitionInstallationChecks:
+      inventory.exhibitionInstallationChecks - snapshot.exhibitionInstallationCheckCount,
+    exhibitionInstallationImages:
+      inventory.exhibitionInstallationImages - snapshot.exhibitionInstallationImageCount,
+    exhibitionOpeningGates:
+      inventory.exhibitionOpeningGates - snapshot.exhibitionOpeningGateCount,
+    exhibitionOpeningItems:
+      inventory.exhibitionOpeningItems - snapshot.exhibitionOpeningItemCount,
     mediaAssets: inventory.mediaAssets - snapshot.mediaCount,
     mediaBytes: inventory.mediaBytes - snapshot.mediaBytes,
   };

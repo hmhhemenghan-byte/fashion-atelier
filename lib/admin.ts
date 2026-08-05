@@ -11,7 +11,7 @@ export async function requireApiAdmin(): Promise<AdminCheck> {
     return {
       user: null,
       response: Response.json(
-        { error: "请先使用 ChatGPT 账号登录。" },
+        { error: "请先通过站点身份验证登录。" },
         { status: 401 },
       ),
     };

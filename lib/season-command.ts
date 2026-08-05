@@ -25,6 +25,36 @@ import {
 } from "@/lib/production-releases";
 import { listAllProductionExceptions } from "@/lib/production-exceptions";
 import {
+  listAllProductionAcceptanceChecks,
+  listAllProductionAcceptances,
+} from "@/lib/production-acceptances";
+import {
+  listAllProvenanceDossierChecks,
+  listAllProvenanceDossiers,
+} from "@/lib/provenance-dossiers";
+import {
+  listAllConservationReportChecks,
+  listAllConservationReports,
+} from "@/lib/conservation-reports";
+import {
+  listAllExhibitionReadinessChecks,
+  listAllExhibitionReadinessPlans,
+} from "@/lib/exhibition-readiness";
+import {
+  listAllExhibitionWatches,
+  listAllExhibitionWatchObservations,
+  readingOutsidePlan,
+} from "@/lib/exhibition-watch";
+import {
+  listAllExhibitionRecoveries,
+  listAllExhibitionRecoveryChecks,
+} from "@/lib/exhibition-recovery";
+import { buildCuratorialOverview, type CuratorialWorkspace } from "@/lib/archive-curation";
+import { buildInterpretationOverview, type InterpretationWorkspace } from "@/lib/exhibition-interpretation";
+import { buildExhibitionDeliveryOverview, type ExhibitionDeliveryWorkspace } from "@/lib/exhibition-delivery";
+import { buildExhibitionInstallationOverview, type ExhibitionInstallationWorkspace } from "@/lib/exhibition-installation";
+import { buildExhibitionOpeningOverview, type ExhibitionOpeningWorkspace } from "@/lib/exhibition-opening";
+import {
   listAllMaterials,
   listAllWorkMaterials,
 } from "@/lib/materials";
@@ -116,7 +146,18 @@ export type SeasonCommandAgendaItem = {
     | "fitting"
     | "sampleSignoff"
     | "productionRelease"
-    | "productionException";
+    | "productionException"
+    | "productionAcceptance"
+    | "provenanceDossier"
+    | "conservation"
+    | "exhibition"
+    | "exhibitionWatch"
+    | "exhibitionRecovery"
+    | "curation"
+    | "interpretation"
+    | "exhibitionDelivery"
+    | "exhibitionInstallation"
+    | "exhibitionOpening";
   eyebrow: string;
   title: string;
   detail: string;
@@ -201,6 +242,23 @@ export async function buildSeasonCommandOverview(
     productionReleases,
     productionReleaseChecks,
     productionExceptions,
+    productionAcceptances,
+    productionAcceptanceChecks,
+    provenanceDossiers,
+    provenanceDossierChecks,
+    conservationReports,
+    conservationReportChecks,
+    exhibitionPlans,
+    exhibitionChecks,
+    exhibitionWatches,
+    exhibitionWatchObservations,
+    exhibitionRecoveries,
+    exhibitionRecoveryChecks,
+    curation,
+    interpretation,
+    exhibitionDelivery,
+    exhibitionInstallation,
+    exhibitionOpening,
     archiveSnapshots,
   ] = await Promise.all([
     getEditorialOverview(),
@@ -230,6 +288,23 @@ export async function buildSeasonCommandOverview(
     listAllProductionReleases(),
     listAllProductionReleaseChecks(),
     listAllProductionExceptions(),
+    listAllProductionAcceptances(),
+    listAllProductionAcceptanceChecks(),
+    listAllProvenanceDossiers(),
+    listAllProvenanceDossierChecks(),
+    listAllConservationReports(),
+    listAllConservationReportChecks(),
+    listAllExhibitionReadinessPlans(),
+    listAllExhibitionReadinessChecks(),
+    listAllExhibitionWatches(),
+    listAllExhibitionWatchObservations(),
+    listAllExhibitionRecoveries(),
+    listAllExhibitionRecoveryChecks(),
+    buildCuratorialOverview(now),
+    buildInterpretationOverview(now),
+    buildExhibitionDeliveryOverview(now),
+    buildExhibitionInstallationOverview(now),
+    buildExhibitionOpeningOverview(now),
     listArchiveSnapshots(1),
   ]);
 
@@ -251,6 +326,7 @@ export async function buildSeasonCommandOverview(
   const workById = new Map(
     calendar.references.works.map((work) => [work.id, work]),
   );
+  const assetById = new Map(assets.map((asset) => [asset.id, asset]));
   const materialById = new Map(
     materials.map((material) => [material.id, material]),
   );
@@ -265,6 +341,10 @@ export async function buildSeasonCommandOverview(
   );
   const productionReleaseById = new Map(
     productionReleases.map((release) => [release.id, release]),
+  );
+  const productionAcceptanceByRelease = groupBy(
+    productionAcceptances,
+    (acceptance) => acceptance.productionReleaseId,
   );
   const collectionIdByWorkId = new Map(
     calendar.references.assignments.map((assignment) => [
@@ -635,6 +715,169 @@ export async function buildSeasonCommandOverview(
     ...criticalProductionExceptions.map((record) => record.id),
     ...overdueProductionExceptions.map((record) => record.id),
   ]).size;
+  const productionAcceptanceConflicts = productionReleases.flatMap(
+    (release) => {
+      if (release.status !== "released" || !release.authorizationCode) return [];
+      const linked = productionAcceptanceByRelease.get(release.id) ?? [];
+      return linked.some((acceptance) => acceptance.status === "accepted")
+        ? []
+        : [{ release, latest: linked[0] ?? null }];
+    },
+  );
+  const failedProductionAcceptanceChecks = productionAcceptanceChecks.filter(
+    (check) => {
+      const acceptance = productionAcceptances.find(
+        (item) => item.id === check.productionAcceptanceId,
+      );
+      return (
+        check.result === "fail" &&
+        acceptance &&
+        !["rejected", "void"].includes(acceptance.status)
+      );
+    },
+  );
+  const productionAcceptanceAttention =
+    productionAcceptanceConflicts.length +
+    failedProductionAcceptanceChecks.length;
+  const provenanceDossiersByAcceptance = groupBy(
+    provenanceDossiers,
+    (dossier) => dossier.productionAcceptanceId,
+  );
+  const provenanceDossierConflicts = productionAcceptances.flatMap(
+    (acceptance) => {
+      if (acceptance.status !== "accepted" || !acceptance.acceptanceSeal) return [];
+      const linked = provenanceDossiersByAcceptance.get(acceptance.id) ?? [];
+      return linked.some((dossier) => dossier.status === "published")
+        ? []
+        : [{ acceptance, latest: linked[0] ?? null }];
+    },
+  );
+  const provenanceDossierById = new Map(
+    provenanceDossiers.map((dossier) => [dossier.id, dossier]),
+  );
+  const failedProvenanceDossierChecks = provenanceDossierChecks.filter(
+    (check) => {
+      const dossier = provenanceDossierById.get(check.provenanceDossierId);
+      return (
+        check.result === "fail" &&
+        dossier &&
+        !["retired", "void"].includes(dossier.status)
+      );
+    },
+  );
+  const provenanceDossierAttention =
+    provenanceDossierConflicts.length + failedProvenanceDossierChecks.length;
+  const activeConservationReports = conservationReports.filter(
+    (report) => !["closed", "void"].includes(report.status),
+  );
+  const activeConservationReportById = new Map(
+    activeConservationReports.map((report) => [report.id, report]),
+  );
+  const criticalConservationChecks = conservationReportChecks.filter(
+    (check) =>
+      activeConservationReportById.has(check.conservationReportId) &&
+      ["high", "critical"].includes(check.severity) &&
+      !["resolved", "na"].includes(check.result),
+  );
+  const overdueConservationReports = activeConservationReports.filter(
+    (report) =>
+      Boolean(report.nextReviewAt) &&
+      timestamp(report.nextReviewAt) < startOfDay(now),
+  );
+  const conservationAttention = new Set([
+    ...criticalConservationChecks.map((check) => check.conservationReportId),
+    ...overdueConservationReports.map((report) => report.id),
+  ]).size;
+  const activeExhibitionPlans = exhibitionPlans.filter(
+    (plan) => !["closed", "void"].includes(plan.status),
+  );
+  const activeExhibitionPlanById = new Map(
+    activeExhibitionPlans.map((plan) => [plan.id, plan]),
+  );
+  const blockedExhibitionChecks = exhibitionChecks.filter(
+    (check) =>
+      activeExhibitionPlanById.has(check.exhibitionReadinessPlanId) &&
+      check.result === "blocked" &&
+      check.critical,
+  );
+  const upcomingUnapprovedExhibitionPlans = activeExhibitionPlans.filter(
+    (plan) =>
+      Boolean(plan.installAt) &&
+      timestamp(plan.installAt) >= nowMs &&
+      timestamp(plan.installAt) <= fourteenDaysAt &&
+      plan.status !== "approved",
+  );
+  const overdueExhibitionPlans = exhibitionPlans.filter(
+    (plan) =>
+      plan.status === "approved" &&
+      Boolean(plan.deinstallAt) &&
+      timestamp(plan.deinstallAt) < nowMs,
+  );
+  const exhibitionAttention = new Set([
+    ...blockedExhibitionChecks.map((check) => check.exhibitionReadinessPlanId),
+    ...upcomingUnapprovedExhibitionPlans.map((plan) => plan.id),
+    ...overdueExhibitionPlans.map((plan) => plan.id),
+  ]).size;
+  const exhibitionPlanById = new Map(exhibitionPlans.map((plan) => [plan.id, plan]));
+  const watchByPlanId = new Map(exhibitionWatches.map((watch) => [watch.exhibitionReadinessPlanId, watch]));
+  const latestObservationByWatch = new Map<string, (typeof exhibitionWatchObservations)[number]>();
+  exhibitionWatchObservations.forEach((observation) => {
+    const current = latestObservationByWatch.get(observation.exhibitionWatchId);
+    if (!current || timestamp(observation.observedAt) > timestamp(current.observedAt)) latestObservationByWatch.set(observation.exhibitionWatchId, observation);
+  });
+  const missingExhibitionWatches = exhibitionPlans.filter((plan) =>
+    plan.status === "approved" && ["ready", "ready_with_limits"].includes(plan.decision) &&
+    Boolean(plan.installAt) && timestamp(plan.installAt) <= nowMs &&
+    (!plan.deinstallAt || timestamp(plan.deinstallAt) >= nowMs) && !watchByPlanId.has(plan.id),
+  );
+  const overdueExhibitionWatches = exhibitionWatches.filter((watch) => {
+    if (!["active", "paused"].includes(watch.status)) return false;
+    return timestamp(watch.lastObservedAt || watch.openedAt) + watch.monitoringIntervalHours * 3_600_000 < nowMs;
+  });
+  const attentionExhibitionWatches = exhibitionWatches.filter((watch) => {
+    if (!["active", "paused"].includes(watch.status)) return false;
+    const latest = latestObservationByWatch.get(watch.id);
+    const plan = exhibitionPlanById.get(watch.exhibitionReadinessPlanId);
+    return Boolean(latest && (latest.conditionResult !== "stable" || latest.supportResult !== "stable" || latest.pestResult !== "none" || latest.incidentType !== "none" || ["pause", "deinstall", "conservator_review"].includes(latest.disposition) || (plan && readingOutsidePlan(latest, plan))));
+  });
+  const exhibitionWatchAttention = new Set([
+    ...missingExhibitionWatches.map((plan) => plan.id),
+    ...overdueExhibitionWatches.map((watch) => watch.id),
+    ...attentionExhibitionWatches.map((watch) => watch.id),
+  ]).size;
+  const recoveryByWatchId = new Map(exhibitionRecoveries.map((recovery) => [recovery.exhibitionWatchId, recovery]));
+  const exhibitionRecoveryConflicts = exhibitionWatches
+    .filter((watch) => ["deinstalled", "closed"].includes(watch.status))
+    .map((watch) => ({ watch, recovery: recoveryByWatchId.get(watch.id) ?? null }))
+    .filter(({ recovery }) => !recovery || !["released", "referred", "void"].includes(recovery.status));
+  const activeRecoveryIds = new Set(exhibitionRecoveries.filter((recovery) => !["released", "referred", "void"].includes(recovery.status)).map((recovery) => recovery.id));
+  const blockedExhibitionRecoveryChecks = exhibitionRecoveryChecks.filter((check) => activeRecoveryIds.has(check.exhibitionRecoveryId) && check.critical && check.result === "blocked");
+  const dueExhibitionRecoveries = exhibitionRecoveries.filter((recovery) => recovery.status === "stabilizing" && Boolean(recovery.acclimatizationUntil) && timestamp(recovery.acclimatizationUntil) <= nowMs);
+  const exhibitionRecoveryAttention = new Set([
+    ...exhibitionRecoveryConflicts.map(({ watch }) => watch.id),
+    ...blockedExhibitionRecoveryChecks.map((check) => check.exhibitionRecoveryId),
+    ...dueExhibitionRecoveries.map((recovery) => recovery.id),
+  ]).size;
+  const curatorialAttentionProjects = curation.projects.filter((item) =>
+    !["approved", "closed", "void"].includes(item.project.status) &&
+    (item.summary.blocked > 0 || item.project.decision === "revise" || item.project.status === "in_review" && !item.summary.approvalReady),
+  );
+  const interpretationAttentionPackages = interpretation.packages.filter((item) =>
+    !["approved", "closed", "void"].includes(item.package.status) &&
+    ((item.package.status === "in_review" && !item.summary.approvalReady) || item.package.decision === "revise"),
+  );
+  const exhibitionDeliveryAttentionPackages = exhibitionDelivery.packages.filter((item) =>
+    !["approved", "closed", "void"].includes(item.package.status) &&
+    ((item.package.status === "in_review" && !item.summary.approvalReady) || item.package.decision === "revise"),
+  );
+  const exhibitionInstallationAttentionGates = exhibitionInstallation.gates.filter((item) =>
+    !["approved", "closed", "void"].includes(item.gate.status) &&
+    (item.summary.upcomingUnapproved || item.gate.decision === "rework" || item.summary.attentionChecks + item.summary.blockedChecks > 0 || item.gate.status === "in_review" && !item.summary.approvalReady),
+  );
+  const exhibitionOpeningAttentionGates = exhibitionOpening.gates.filter((item) =>
+    !["approved", "closed", "void"].includes(item.gate.status) &&
+    (item.summary.upcomingUnapproved || item.gate.decision === "rework" || item.summary.attentionItems + item.summary.blockedItems > 0 || item.gate.status === "in_review" && !item.summary.approvalReady),
+  );
 
   const gates: SeasonCommandGate[] = [
     {
@@ -743,6 +986,125 @@ export async function buildSeasonCommandOverview(
       href: "#production-change-control",
     },
     {
+      id: "production-acceptance",
+      label: "成衣实物验收",
+      detail:
+        productionAcceptanceConflicts.length === 0 &&
+        failedProductionAcceptanceChecks.length === 0
+          ? "所有有效 NERA-GO 均有人工成衣验收，且没有开放的失败核对。"
+          : `有 ${productionAcceptanceConflicts.length} 个生产放行尚未形成通过验收，${failedProductionAcceptanceChecks.length} 项实物核对失败。`,
+      passed:
+        productionAcceptanceConflicts.length === 0 &&
+        failedProductionAcceptanceChecks.length === 0,
+      href: "#production-acceptance",
+    },
+    {
+      id: "provenance-dossier",
+      label: "溯源档案发布",
+      detail:
+        provenanceDossierConflicts.length === 0 &&
+        failedProvenanceDossierChecks.length === 0
+          ? "所有已验收实物版本均有人工发布的溯源档案，且没有失败的公开核对。"
+          : `有 ${provenanceDossierConflicts.length} 个已验收版本尚未形成公开档案，${failedProvenanceDossierChecks.length} 项公开核对失败。`,
+      passed:
+        provenanceDossierConflicts.length === 0 &&
+        failedProvenanceDossierChecks.length === 0,
+      href: "#provenance-dossier",
+    },
+    {
+      id: "conservation",
+      label: "作品养护状态",
+      detail:
+        criticalConservationChecks.length === 0 &&
+        overdueConservationReports.length === 0
+          ? "没有未解决的高风险养护问题或逾期复查。"
+          : `有 ${criticalConservationChecks.length} 项高风险养护问题、${overdueConservationReports.length} 份逾期复查需要人工处理。`,
+      passed:
+        criticalConservationChecks.length === 0 &&
+        overdueConservationReports.length === 0,
+      href: "#conservation-atelier",
+    },
+    {
+      id: "exhibition-readiness",
+      label: "展陈安全放行",
+      detail:
+        blockedExhibitionChecks.length === 0 &&
+        upcomingUnapprovedExhibitionPlans.length === 0 &&
+        overdueExhibitionPlans.length === 0
+          ? "没有关键展陈阻塞、临近未批准安装或逾期撤展。"
+          : `有 ${blockedExhibitionChecks.length} 项关键条件阻塞、${upcomingUnapprovedExhibitionPlans.length} 个临近安装尚未批准、${overdueExhibitionPlans.length} 个方案已逾期撤展。`,
+      passed:
+        blockedExhibitionChecks.length === 0 &&
+        upcomingUnapprovedExhibitionPlans.length === 0 &&
+        overdueExhibitionPlans.length === 0,
+      href: "#exhibition-readiness",
+    },
+    {
+      id: "exhibition-watch",
+      label: "展期监测闭环",
+      detail:
+        missingExhibitionWatches.length === 0 && overdueExhibitionWatches.length === 0 && attentionExhibitionWatches.length === 0
+          ? "所有在展作品均已进入监测，没有逾期检查或未处理的最新异常。"
+          : `有 ${missingExhibitionWatches.length} 个在展方案尚未开启监测、${overdueExhibitionWatches.length} 条监测逾期、${attentionExhibitionWatches.length} 条最新观察需要人工判断。`,
+      passed: missingExhibitionWatches.length === 0 && overdueExhibitionWatches.length === 0 && attentionExhibitionWatches.length === 0,
+      href: "#exhibition-watch",
+    },
+    {
+      id: "exhibition-recovery",
+      label: "展后复原闭环",
+      detail:
+        exhibitionRecoveryConflicts.length === 0 && blockedExhibitionRecoveryChecks.length === 0 && dueExhibitionRecoveries.length === 0
+          ? "所有已撤展作品均已形成回库、转养护或作废的人工冻结结论。"
+          : `有 ${exhibitionRecoveryConflicts.length} 件撤展作品尚未闭环、${blockedExhibitionRecoveryChecks.length} 项关键复原核对阻塞、${dueExhibitionRecoveries.length} 件作品已到静置复核时间。`,
+      passed: exhibitionRecoveryConflicts.length === 0 && blockedExhibitionRecoveryChecks.length === 0 && dueExhibitionRecoveries.length === 0,
+      href: "#exhibition-recovery",
+    },
+    {
+      id: "archive-curation",
+      label: "档案策展评审",
+      detail: curatorialAttentionProjects.length === 0
+        ? "没有受实物状态阻塞或等待修改的开放策展评审。"
+        : `有 ${curatorialAttentionProjects.length} 个策展项目需要补齐选择依据、处理实物边界或重新判断。`,
+      passed: curatorialAttentionProjects.length === 0,
+      href: "#archive-curation",
+    },
+    {
+      id: "exhibition-interpretation",
+      label: "展览释读评审",
+      detail: interpretationAttentionPackages.length === 0
+        ? "没有等待补齐事实、权利或无障碍文字的开放释读评审。"
+        : `有 ${interpretationAttentionPackages.length} 个释读修订需要补齐文字事实或重新判断。`,
+      passed: interpretationAttentionPackages.length === 0,
+      href: "#exhibition-interpretation",
+    },
+    {
+      id: "exhibition-delivery",
+      label: "展览交付签核",
+      detail: exhibitionDeliveryAttentionPackages.length === 0
+        ? "没有等待校样、补齐交接事实或重新判断的开放交付包。"
+        : `有 ${exhibitionDeliveryAttentionPackages.length} 个展览交付包需要完成校样或重新判断。`,
+      passed: exhibitionDeliveryAttentionPackages.length === 0,
+      href: "#exhibition-delivery",
+    },
+    {
+      id: "exhibition-installation",
+      label: "展览装校验收",
+      detail: exhibitionInstallationAttentionGates.length === 0
+        ? "没有临近开放、等待整改或缺少现场证据的装校签核。"
+        : `有 ${exhibitionInstallationAttentionGates.length} 个现场装校签核需要复验或人工判断。`,
+      passed: exhibitionInstallationAttentionGates.length === 0,
+      href: "#exhibition-installation",
+    },
+    {
+      id: "exhibition-opening",
+      label: "展览开放签核",
+      detail: exhibitionOpeningAttentionGates.length === 0
+        ? "没有临近开放、作品未就绪或等待人工决定的开放总签核。"
+        : `有 ${exhibitionOpeningAttentionGates.length} 个开放总签核需要补齐作品事实或重新判断。`,
+      passed: exhibitionOpeningAttentionGates.length === 0,
+      href: "#exhibition-opening",
+    },
+    {
       id: "calendar",
       label: "关键排期",
       detail:
@@ -837,6 +1199,33 @@ export async function buildSeasonCommandOverview(
     productionReleaseById,
     criticalProductionExceptions,
     overdueProductionExceptions,
+    productionAcceptanceConflicts,
+    failedProductionAcceptanceChecks,
+    productionAcceptances,
+    provenanceDossierConflicts,
+    failedProvenanceDossierChecks,
+    provenanceDossiers,
+    criticalConservationChecks,
+    overdueConservationReports,
+    conservationReports,
+    assetById,
+    blockedExhibitionChecks,
+    upcomingUnapprovedExhibitionPlans,
+    overdueExhibitionPlans,
+    exhibitionPlans,
+    missingExhibitionWatches,
+    overdueExhibitionWatches,
+    attentionExhibitionWatches,
+    exhibitionWatches,
+    latestObservationByWatch,
+    exhibitionRecoveryConflicts,
+    blockedExhibitionRecoveryChecks,
+    dueExhibitionRecoveries,
+    curatorialAttentionProjects,
+    interpretationAttentionPackages,
+    exhibitionDeliveryAttentionPackages,
+    exhibitionInstallationAttentionGates,
+    exhibitionOpeningAttentionGates,
     workById,
     collectionIdByWorkId,
     contactById,
@@ -899,6 +1288,28 @@ export async function buildSeasonCommandOverview(
     productionReleaseAttention,
     productionExceptions: productionExceptions.length,
     productionExceptionAttention,
+    productionAcceptances: productionAcceptances.length,
+    productionAcceptanceAttention,
+    provenanceDossiers: provenanceDossiers.length,
+    provenanceDossierAttention,
+    conservationReports: conservationReports.length,
+    conservationAttention,
+    exhibitionPlans: exhibitionPlans.length,
+    exhibitionAttention,
+    exhibitionWatches: exhibitionWatches.length,
+    exhibitionWatchAttention,
+    exhibitionRecoveries: exhibitionRecoveries.length,
+    exhibitionRecoveryAttention,
+    curatorialProjects: curation.metrics.total,
+    curatorialAttention: curatorialAttentionProjects.length,
+    interpretationPackages: interpretation.metrics.total,
+    interpretationAttention: interpretationAttentionPackages.length,
+    exhibitionDeliveryPackages: exhibitionDelivery.metrics.total,
+    exhibitionDeliveryAttention: exhibitionDeliveryAttentionPackages.length,
+    exhibitionInstallationGates: exhibitionInstallation.metrics.total,
+    exhibitionInstallationAttention: exhibitionInstallationAttentionGates.length,
+    exhibitionOpeningGates: exhibitionOpening.metrics.total,
+    exhibitionOpeningAttention: exhibitionOpeningAttentionGates.length,
     archiveSnapshots: archiveSnapshots.length,
   });
 
@@ -1023,6 +1434,65 @@ type AgendaInput = {
   >;
   overdueProductionExceptions: Awaited<
     ReturnType<typeof listAllProductionExceptions>
+  >;
+  productionAcceptanceConflicts: Array<{
+    release: Awaited<ReturnType<typeof listAllProductionReleases>>[number];
+    latest:
+      | Awaited<ReturnType<typeof listAllProductionAcceptances>>[number]
+      | null;
+  }>;
+  failedProductionAcceptanceChecks: Awaited<
+    ReturnType<typeof listAllProductionAcceptanceChecks>
+  >;
+  productionAcceptances: Awaited<
+    ReturnType<typeof listAllProductionAcceptances>
+  >;
+  provenanceDossierConflicts: Array<{
+    acceptance: Awaited<ReturnType<typeof listAllProductionAcceptances>>[number];
+    latest:
+      | Awaited<ReturnType<typeof listAllProvenanceDossiers>>[number]
+      | null;
+  }>;
+  failedProvenanceDossierChecks: Awaited<
+    ReturnType<typeof listAllProvenanceDossierChecks>
+  >;
+  provenanceDossiers: Awaited<ReturnType<typeof listAllProvenanceDossiers>>;
+  criticalConservationChecks: Awaited<
+    ReturnType<typeof listAllConservationReportChecks>
+  >;
+  overdueConservationReports: Awaited<
+    ReturnType<typeof listAllConservationReports>
+  >;
+  conservationReports: Awaited<ReturnType<typeof listAllConservationReports>>;
+  blockedExhibitionChecks: Awaited<
+    ReturnType<typeof listAllExhibitionReadinessChecks>
+  >;
+  upcomingUnapprovedExhibitionPlans: Awaited<
+    ReturnType<typeof listAllExhibitionReadinessPlans>
+  >;
+  overdueExhibitionPlans: Awaited<
+    ReturnType<typeof listAllExhibitionReadinessPlans>
+  >;
+  exhibitionPlans: Awaited<ReturnType<typeof listAllExhibitionReadinessPlans>>;
+  missingExhibitionWatches: Awaited<ReturnType<typeof listAllExhibitionReadinessPlans>>;
+  overdueExhibitionWatches: Awaited<ReturnType<typeof listAllExhibitionWatches>>;
+  attentionExhibitionWatches: Awaited<ReturnType<typeof listAllExhibitionWatches>>;
+  exhibitionWatches: Awaited<ReturnType<typeof listAllExhibitionWatches>>;
+  latestObservationByWatch: Map<string, Awaited<ReturnType<typeof listAllExhibitionWatchObservations>>[number]>;
+  exhibitionRecoveryConflicts: Array<{
+    watch: Awaited<ReturnType<typeof listAllExhibitionWatches>>[number];
+    recovery: Awaited<ReturnType<typeof listAllExhibitionRecoveries>>[number] | null;
+  }>;
+  blockedExhibitionRecoveryChecks: Awaited<ReturnType<typeof listAllExhibitionRecoveryChecks>>;
+  dueExhibitionRecoveries: Awaited<ReturnType<typeof listAllExhibitionRecoveries>>;
+  curatorialAttentionProjects: CuratorialWorkspace[];
+  interpretationAttentionPackages: InterpretationWorkspace[];
+  exhibitionDeliveryAttentionPackages: ExhibitionDeliveryWorkspace[];
+  exhibitionInstallationAttentionGates: ExhibitionInstallationWorkspace[];
+  exhibitionOpeningAttentionGates: ExhibitionOpeningWorkspace[];
+  assetById: Map<
+    string,
+    Awaited<ReturnType<typeof listAllSampleAssets>>[number]
   >;
   workById: Map<
     string,
@@ -1386,6 +1856,336 @@ function buildAgenda(input: AgendaInput): SeasonCommandAgendaItem[] {
     });
   });
 
+  input.productionAcceptanceConflicts
+    .slice(0, 6)
+    .forEach(({ release, latest }) => {
+      const work = input.workById.get(release.workId);
+      items.push({
+        id: `production-acceptance-${release.id}`,
+        kind: "productionAcceptance",
+        eyebrow: "EDITION ACCEPTANCE / 实物缺口",
+        title: work?.title ?? release.releaseCode,
+        detail: [
+          release.authorizationCode,
+          latest?.acceptanceCode,
+          latest ? "当前验收尚未通过" : "尚未建立成衣验收",
+        ]
+          .filter(Boolean)
+          .join(" · "),
+        dueAt: latest?.receivedAt ?? release.plannedWindowEnd,
+        urgency: "attention",
+        href: "#production-acceptance",
+        collectionId: input.collectionIdByWorkId.get(release.workId) ?? null,
+      });
+    });
+
+  const acceptanceById = new Map(
+    input.productionAcceptances.map((acceptance) => [acceptance.id, acceptance]),
+  );
+  input.failedProductionAcceptanceChecks.slice(0, 8).forEach((check) => {
+    const acceptance = acceptanceById.get(check.productionAcceptanceId);
+    const work = acceptance ? input.workById.get(acceptance.workId) : null;
+    items.push({
+      id: `production-acceptance-check-${check.id}`,
+      kind: "productionAcceptance",
+      eyebrow: "PHYSICAL CHECK / 核对失败",
+      title: check.title,
+      detail: [
+        acceptance?.acceptanceCode,
+        work?.title,
+        check.observation || check.requirement,
+      ]
+        .filter(Boolean)
+        .join(" · "),
+      dueAt: acceptance?.inspectedAt ?? acceptance?.receivedAt ?? null,
+      urgency: "attention",
+      href: "#production-acceptance",
+      collectionId: acceptance
+        ? input.collectionIdByWorkId.get(acceptance.workId) ?? null
+        : null,
+    });
+  });
+
+  input.provenanceDossierConflicts.slice(0, 6).forEach(({ acceptance, latest }) => {
+    const work = input.workById.get(acceptance.workId);
+    items.push({
+      id: `provenance-dossier-${acceptance.id}`,
+      kind: "provenanceDossier",
+      eyebrow: "PROVENANCE DOSSIER / 公开档案缺口",
+      title: work?.title ?? acceptance.acceptanceCode,
+      detail: [
+        acceptance.acceptanceSeal,
+        latest?.dossierCode,
+        latest ? "当前修订尚未发布" : "尚未建立溯源档案",
+      ]
+        .filter(Boolean)
+        .join(" · "),
+      dueAt: latest?.reviewedAt ?? acceptance.acceptedAt,
+      urgency: "attention",
+      href: "#provenance-dossier",
+      collectionId: input.collectionIdByWorkId.get(acceptance.workId) ?? null,
+    });
+  });
+
+  const provenanceDossierById = new Map(
+    input.provenanceDossiers.map((dossier) => [dossier.id, dossier]),
+  );
+  input.failedProvenanceDossierChecks.slice(0, 8).forEach((check) => {
+    const dossier = provenanceDossierById.get(check.provenanceDossierId);
+    const work = dossier ? input.workById.get(dossier.workId) : null;
+    items.push({
+      id: `provenance-dossier-check-${check.id}`,
+      kind: "provenanceDossier",
+      eyebrow: "PUBLIC CHECK / 公开核对失败",
+      title: check.title,
+      detail: [
+        dossier?.dossierCode,
+        work?.title,
+        check.observation || check.requirement,
+      ]
+        .filter(Boolean)
+        .join(" · "),
+      dueAt: dossier?.reviewedAt ?? null,
+      urgency: "attention",
+      href: "#provenance-dossier",
+      collectionId: dossier
+        ? input.collectionIdByWorkId.get(dossier.workId) ?? null
+        : null,
+    });
+  });
+
+  input.overdueConservationReports.slice(0, 8).forEach((report) => {
+    const asset = input.assetById.get(report.sampleAssetId);
+    const work = report.workId ? input.workById.get(report.workId) : null;
+    items.push({
+      id: `conservation-review-${report.id}`,
+      kind: "conservation",
+      eyebrow: "CONSERVATION / 复查逾期",
+      title: work?.title ?? asset?.workTitle ?? report.reportCode,
+      detail: [report.reportCode, asset?.assetCode, report.conditionSummary]
+        .filter(Boolean)
+        .join(" · "),
+      dueAt: report.nextReviewAt,
+      urgency: "overdue",
+      href: "#conservation-atelier",
+      collectionId: report.workId
+        ? input.collectionIdByWorkId.get(report.workId) ?? null
+        : null,
+    });
+  });
+
+  const conservationReportById = new Map(
+    input.conservationReports.map((report) => [report.id, report]),
+  );
+  input.criticalConservationChecks.slice(0, 8).forEach((check) => {
+    const report = conservationReportById.get(check.conservationReportId);
+    const asset = report ? input.assetById.get(report.sampleAssetId) : null;
+    const work = report?.workId ? input.workById.get(report.workId) : null;
+    items.push({
+      id: `conservation-check-${check.id}`,
+      kind: "conservation",
+      eyebrow: "CONDITION CHECK / 高风险养护",
+      title: check.title,
+      detail: [
+        report?.reportCode,
+        work?.title ?? asset?.workTitle,
+        check.observation || check.requirement,
+      ]
+        .filter(Boolean)
+        .join(" · "),
+      dueAt: report?.nextReviewAt ?? null,
+      urgency: "attention",
+      href: "#conservation-atelier",
+      collectionId: report?.workId
+        ? input.collectionIdByWorkId.get(report.workId) ?? null
+        : null,
+    });
+  });
+
+  [...input.overdueExhibitionPlans, ...input.upcomingUnapprovedExhibitionPlans]
+    .slice(0, 8)
+    .forEach((plan) => {
+      const asset = input.assetById.get(plan.sampleAssetId);
+      const work = plan.workId ? input.workById.get(plan.workId) : null;
+      const overdue = input.overdueExhibitionPlans.some((item) => item.id === plan.id);
+      items.push({
+        id: `exhibition-plan-${plan.id}`,
+        kind: "exhibition",
+        eyebrow: overdue ? "EXHIBITION / 撤展逾期" : "EXHIBITION / 安装待放行",
+        title: plan.title || work?.title || asset?.workTitle || plan.planCode,
+        detail: [plan.planCode, plan.venue, overdue ? "等待撤展关闭" : "安装前尚未批准"]
+          .filter(Boolean)
+          .join(" · "),
+        dueAt: overdue ? plan.deinstallAt : plan.installAt,
+        urgency: overdue ? "overdue" : "attention",
+        href: "#exhibition-readiness",
+        collectionId: plan.workId
+          ? input.collectionIdByWorkId.get(plan.workId) ?? null
+          : null,
+      });
+    });
+
+  const exhibitionPlanById = new Map(
+    input.exhibitionPlans.map((plan) => [plan.id, plan]),
+  );
+  input.blockedExhibitionChecks.slice(0, 8).forEach((check) => {
+    const plan = exhibitionPlanById.get(check.exhibitionReadinessPlanId);
+    const work = plan?.workId ? input.workById.get(plan.workId) : null;
+    items.push({
+      id: `exhibition-check-${check.id}`,
+      kind: "exhibition",
+      eyebrow: "DISPLAY CHECK / 关键条件阻塞",
+      title: check.title,
+      detail: [plan?.planCode, work?.title, check.observation || check.requirement]
+        .filter(Boolean)
+        .join(" · "),
+      dueAt: plan?.installAt ?? null,
+      urgency: "attention",
+      href: "#exhibition-readiness",
+      collectionId: plan?.workId
+        ? input.collectionIdByWorkId.get(plan.workId) ?? null
+        : null,
+    });
+  });
+
+  input.missingExhibitionWatches.slice(0, 6).forEach((plan) => {
+    const asset = input.assetById.get(plan.sampleAssetId);
+    const work = plan.workId ? input.workById.get(plan.workId) : null;
+    items.push({
+      id: `exhibition-watch-missing-${plan.id}`,
+      kind: "exhibitionWatch",
+      eyebrow: "EXHIBITION WATCH / 监测未开启",
+      title: plan.title || work?.title || asset?.workTitle || plan.planCode,
+      detail: [plan.planCode, plan.venue, "作品已进入展示窗口但尚未建立现场监测"].filter(Boolean).join(" · "),
+      dueAt: plan.installAt,
+      urgency: "attention",
+      href: "#exhibition-watch",
+      collectionId: plan.workId ? input.collectionIdByWorkId.get(plan.workId) ?? null : null,
+    });
+  });
+
+  [...input.overdueExhibitionWatches, ...input.attentionExhibitionWatches]
+    .slice(0, 8)
+    .forEach((watch) => {
+      const plan = input.exhibitionPlans.find((item) => item.id === watch.exhibitionReadinessPlanId);
+      const asset = input.assetById.get(watch.sampleAssetId);
+      const work = plan?.workId ? input.workById.get(plan.workId) : null;
+      const overdue = input.overdueExhibitionWatches.some((item) => item.id === watch.id);
+      const latest = input.latestObservationByWatch.get(watch.id);
+      items.push({
+        id: `exhibition-watch-${watch.id}`,
+        kind: "exhibitionWatch",
+        eyebrow: overdue ? "EXHIBITION WATCH / 检查逾期" : "EXHIBITION WATCH / 现场异常",
+        title: plan?.title || work?.title || asset?.workTitle || watch.watchCode,
+        detail: [watch.watchCode, plan?.venue, latest?.observation || (overdue ? "已超过人工设定的检查间隔" : "最新观察需要人工处置")].filter(Boolean).join(" · "),
+        dueAt: overdue ? watch.lastObservedAt || watch.openedAt : latest?.observedAt ?? null,
+        urgency: overdue ? "overdue" : "attention",
+        href: "#exhibition-watch",
+        collectionId: plan?.workId ? input.collectionIdByWorkId.get(plan.workId) ?? null : null,
+      });
+    });
+
+  input.exhibitionRecoveryConflicts.slice(0, 8).forEach(({ watch, recovery }) => {
+    const plan = input.exhibitionPlans.find((item) => item.id === watch.exhibitionReadinessPlanId);
+    const asset = input.assetById.get(watch.sampleAssetId);
+    const work = plan?.workId ? input.workById.get(plan.workId) : null;
+    items.push({
+      id: `exhibition-recovery-${recovery?.id ?? watch.id}`,
+      kind: "exhibitionRecovery",
+      eyebrow: recovery ? "EXHIBITION RECOVERY / 复原未闭环" : "EXHIBITION RECOVERY / 撤展待接收",
+      title: plan?.title || work?.title || asset?.workTitle || watch.watchCode,
+      detail: [watch.watchCode, recovery?.recoveryCode, recovery ? "等待回库或转养护的人工结论" : "撤展后尚未建立接收与复原记录"].filter(Boolean).join(" · "),
+      dueAt: recovery?.acclimatizationUntil ?? watch.deinstalledAt,
+      urgency: recovery?.status === "stabilizing" && recovery.acclimatizationUntil && timestamp(recovery.acclimatizationUntil) <= nowMs ? "today" : "attention",
+      href: "#exhibition-recovery",
+      collectionId: plan?.workId ? input.collectionIdByWorkId.get(plan.workId) ?? null : null,
+    });
+  });
+
+  input.blockedExhibitionRecoveryChecks.slice(0, 6).forEach((check) => {
+    items.push({
+      id: `exhibition-recovery-check-${check.id}`,
+      kind: "exhibitionRecovery",
+      eyebrow: "RECOVERY CHECK / 关键复原阻塞",
+      title: check.title,
+      detail: check.observation || check.requirement,
+      dueAt: null,
+      urgency: "attention",
+      href: "#exhibition-recovery",
+      collectionId: null,
+    });
+  });
+
+  input.curatorialAttentionProjects.slice(0, 8).forEach((workspace) => {
+    items.push({
+      id: `curation-${workspace.project.id}`,
+      kind: "curation",
+      eyebrow: workspace.summary.blocked > 0 ? "ARCHIVE CURATION / 实物边界阻塞" : "ARCHIVE CURATION / 等待策展判断",
+      title: workspace.project.title,
+      detail: [workspace.project.projectCode, workspace.project.curator, workspace.summary.blocked > 0 ? `${workspace.summary.blocked} 件纳入作品当前不宜展示` : workspace.summary.missingFields.slice(0, 3).join("、")].filter(Boolean).join(" · "),
+      dueAt: workspace.project.openingAt,
+      urgency: workspace.summary.blocked > 0 ? "attention" : urgencyForDate(workspace.project.openingAt, input.now),
+      href: "#archive-curation",
+      collectionId: null,
+    });
+  });
+
+  input.interpretationAttentionPackages.slice(0, 8).forEach((workspace) => {
+    items.push({
+      id: `interpretation-${workspace.package.id}`,
+      kind: "interpretation",
+      eyebrow: "EXHIBITION INTERPRETATION / 等待文字判断",
+      title: workspace.package.title || workspace.project?.title || workspace.package.packageCode,
+      detail: [workspace.package.packageCode, workspace.package.editor, workspace.summary.missingFields.slice(0, 3).join("、")].filter(Boolean).join(" · "),
+      dueAt: null,
+      urgency: "attention",
+      href: "#exhibition-interpretation",
+      collectionId: null,
+    });
+  });
+
+  input.exhibitionDeliveryAttentionPackages.slice(0, 8).forEach((workspace) => {
+    items.push({
+      id: `exhibition-delivery-${workspace.package.id}`,
+      kind: "exhibitionDelivery",
+      eyebrow: "EXHIBITION DELIVERY / 等待交付校样",
+      title: workspace.package.masterTitle || workspace.interpretation?.title || workspace.package.deliveryCode,
+      detail: [workspace.package.deliveryCode, workspace.package.ownerName, `${workspace.summary.readyCount}/${workspace.summary.expectedCount} READY`, workspace.summary.missingFields.slice(0, 2).join("、")].filter(Boolean).join(" · "),
+      dueAt: workspace.package.deliveryAt,
+      urgency: urgencyForDate(workspace.package.deliveryAt, input.now),
+      href: "#exhibition-delivery",
+      collectionId: null,
+    });
+  });
+
+  input.exhibitionInstallationAttentionGates.slice(0, 8).forEach((workspace) => {
+    items.push({
+      id: `exhibition-installation-${workspace.gate.id}`,
+      kind: "exhibitionInstallation",
+      eyebrow: "EXHIBITION INSTALLATION / 等待现场验收",
+      title: workspace.delivery?.masterTitle || workspace.gate.gateCode,
+      detail: [workspace.gate.gateCode, workspace.gate.leadName, `${workspace.summary.passedChecks}/${workspace.summary.expectedChecks} PASS`, workspace.summary.missingFields.slice(0, 2).join("、")].filter(Boolean).join(" · "),
+      dueAt: workspace.gate.openingAt,
+      urgency: urgencyForDate(workspace.gate.openingAt, input.now),
+      href: "#exhibition-installation",
+      collectionId: null,
+    });
+  });
+
+  input.exhibitionOpeningAttentionGates.slice(0, 8).forEach((workspace) => {
+    items.push({
+      id: `exhibition-opening-${workspace.gate.id}`,
+      kind: "exhibitionOpening",
+      eyebrow: "EXHIBITION OPENING / 等待开放授权",
+      title: workspace.project?.project.title || workspace.gate.openingCode,
+      detail: [workspace.gate.openingCode, workspace.gate.openingLead, `${workspace.summary.readyItems}/${workspace.summary.expectedItems} READY`, workspace.summary.missingFields.slice(0, 2).join("、")].filter(Boolean).join(" · "),
+      dueAt: workspace.gate.plannedOpeningAt,
+      urgency: urgencyForDate(workspace.gate.plannedOpeningAt, input.now),
+      href: "#exhibition-opening",
+      collectionId: null,
+    });
+  });
+
   input.calendarEvents
     .filter((event) => {
       if (["completed", "cancelled"].includes(event.status)) return false;
@@ -1659,6 +2459,28 @@ type ModuleInput = {
   productionReleaseAttention: number;
   productionExceptions: number;
   productionExceptionAttention: number;
+  productionAcceptances: number;
+  productionAcceptanceAttention: number;
+  provenanceDossiers: number;
+  provenanceDossierAttention: number;
+  conservationReports: number;
+  conservationAttention: number;
+  exhibitionPlans: number;
+  exhibitionAttention: number;
+  exhibitionWatches: number;
+  exhibitionWatchAttention: number;
+  exhibitionRecoveries: number;
+  exhibitionRecoveryAttention: number;
+  curatorialProjects: number;
+  curatorialAttention: number;
+  interpretationPackages: number;
+  interpretationAttention: number;
+  exhibitionDeliveryPackages: number;
+  exhibitionDeliveryAttention: number;
+  exhibitionInstallationGates: number;
+  exhibitionInstallationAttention: number;
+  exhibitionOpeningGates: number;
+  exhibitionOpeningAttention: number;
   archiveSnapshots: number;
 };
 
@@ -1674,6 +2496,17 @@ function buildModules(input: ModuleInput): SeasonCommandModule[] {
     moduleItem("23", "CREATE", "封样签核台", "FINAL SAMPLE GATE", "#final-sample-gate", input.sampleSignoffs, "GATES", input.sampleSignoffAttention > 0 ? "attention" : input.sampleSignoffs > 0 ? "active" : "clear"),
     moduleItem("24", "CREATE", "生产放行台", "PRODUCTION RELEASE", "#production-release-desk", input.productionReleases, "PACKS", input.productionReleaseAttention > 0 ? "attention" : input.productionReleases > 0 ? "active" : "clear"),
     moduleItem("25", "CREATE", "生产变更控制", "CHANGE CONTROL", "#production-change-control", input.productionExceptions, "CASES", input.productionExceptionAttention > 0 ? "attention" : input.productionExceptions > 0 ? "active" : "clear"),
+    moduleItem("26", "CREATE", "成衣验收台", "EDITION ACCEPTANCE", "#production-acceptance", input.productionAcceptances, "RECEIPTS", input.productionAcceptanceAttention > 0 ? "attention" : input.productionAcceptances > 0 ? "active" : "clear"),
+    moduleItem("27", "PUBLISH", "成衣溯源档案", "PROVENANCE DOSSIER", "#provenance-dossier", input.provenanceDossiers, "DOSSIERS", input.provenanceDossierAttention > 0 ? "attention" : input.provenanceDossiers > 0 ? "clear" : "active"),
+    moduleItem("28", "ARCHIVE", "作品养护室", "CONSERVATION", "#conservation-atelier", input.conservationReports, "REPORTS", input.conservationAttention > 0 ? "attention" : input.conservationReports > 0 ? "clear" : "active"),
+    moduleItem("29", "PUBLISH", "展陈准备室", "EXHIBITION READINESS", "#exhibition-readiness", input.exhibitionPlans, "PLANS", input.exhibitionAttention > 0 ? "attention" : input.exhibitionPlans > 0 ? "clear" : "active"),
+    moduleItem("30", "ARCHIVE", "展期监测台", "EXHIBITION WATCH", "#exhibition-watch", input.exhibitionWatches, "WATCHES", input.exhibitionWatchAttention > 0 ? "attention" : input.exhibitionWatches > 0 ? "clear" : "active"),
+    moduleItem("31", "ARCHIVE", "展后复原室", "EXHIBITION RECOVERY", "#exhibition-recovery", input.exhibitionRecoveries, "RECOVERIES", input.exhibitionRecoveryAttention > 0 ? "attention" : input.exhibitionRecoveries > 0 ? "clear" : "active"),
+    moduleItem("32", "CREATE", "档案策展室", "ARCHIVE CURATION", "#archive-curation", input.curatorialProjects, "PROJECTS", input.curatorialAttention > 0 ? "attention" : input.curatorialProjects > 0 ? "clear" : "active"),
+    moduleItem("33", "PUBLISH", "展览释读室", "EXHIBITION INTERPRETATION", "#exhibition-interpretation", input.interpretationPackages, "PACKAGES", input.interpretationAttention > 0 ? "attention" : input.interpretationPackages > 0 ? "clear" : "active"),
+    moduleItem("34", "PUBLISH", "展览交付台", "EXHIBITION DELIVERY", "#exhibition-delivery", input.exhibitionDeliveryPackages, "PACKAGES", input.exhibitionDeliveryAttention > 0 ? "attention" : input.exhibitionDeliveryPackages > 0 ? "clear" : "active"),
+    moduleItem("35", "PUBLISH", "展览装校签核台", "INSTALLATION GATE", "#exhibition-installation", input.exhibitionInstallationGates, "GATES", input.exhibitionInstallationAttention > 0 ? "attention" : input.exhibitionInstallationGates > 0 ? "clear" : "active"),
+    moduleItem("36", "PUBLISH", "展览开放总签核", "OPENING GATE", "#exhibition-opening", input.exhibitionOpeningGates, "GATES", input.exhibitionOpeningAttention > 0 ? "attention" : input.exhibitionOpeningGates > 0 ? "clear" : "active"),
     moduleItem("04", "PUBLISH", "专业发布", "PUBLICATION", "#publication-center", input.editorial.summary.publications.total, "PACKS", input.editorial.summary.publications.ready > 0 ? "clear" : "attention"),
     moduleItem("05", "PUBLISH", "编辑运营", "EDITORIAL OPS", "#editorial-operations", input.editorial.score, "SCORE", input.editorial.score >= 85 ? "clear" : "attention"),
     moduleItem("06", "PUBLISH", "编辑日历", "CALENDAR", "#editorial-calendar", input.calendar.summary.nextSevenDays, "NEXT 7D", input.calendar.summary.overdue > 0 ? "attention" : "clear"),

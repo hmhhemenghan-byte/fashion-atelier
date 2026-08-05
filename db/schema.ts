@@ -2087,6 +2087,1249 @@ export const productionExceptionActions = sqliteTable(
   ],
 );
 
+export const productionAcceptances = sqliteTable(
+  "production_acceptances",
+  {
+    id: text("id").primaryKey(),
+    acceptanceCode: text("acceptance_code").notNull().unique(),
+    productionReleaseId: text("production_release_id")
+      .notNull()
+      .references(() => productionReleases.id, { onDelete: "cascade" }),
+    workId: text("work_id")
+      .notNull()
+      .references(() => works.id, { onDelete: "cascade" }),
+    sequence: integer("sequence").notNull().default(1),
+    status: text("status", {
+      enum: ["draft", "in_review", "accepted", "rejected", "void"],
+    })
+      .notNull()
+      .default("draft"),
+    decision: text("decision", {
+      enum: ["pending", "accept", "rework", "hold", "reject"],
+    })
+      .notNull()
+      .default("pending"),
+    editionReference: text("edition_reference").notNull().default(""),
+    colorway: text("colorway").notNull().default(""),
+    sizeRange: text("size_range").notNull().default(""),
+    receivedQuantity: integer("received_quantity").notNull().default(0),
+    inspectedQuantity: integer("inspected_quantity").notNull().default(0),
+    receivedAt: text("received_at"),
+    inspectedAt: text("inspected_at"),
+    physicalLocation: text("physical_location").notNull().default(""),
+    inspectionStandard: text("inspection_standard").notNull().default(""),
+    overallObservation: text("overall_observation").notNull().default(""),
+    dispositionNote: text("disposition_note").notNull().default(""),
+    acceptedBy: text("accepted_by").notNull().default(""),
+    acceptedAt: text("accepted_at"),
+    acceptanceSeal: text("acceptance_seal").unique(),
+    notes: text("notes").notNull().default(""),
+    createdBy: text("created_by").notNull(),
+    createdAt: text("created_at").notNull().default(sql`CURRENT_TIMESTAMP`),
+    updatedAt: text("updated_at").notNull().default(sql`CURRENT_TIMESTAMP`),
+  },
+  (table) => [
+    uniqueIndex("production_acceptances_release_sequence_uidx").on(
+      table.productionReleaseId,
+      table.sequence,
+    ),
+    index("production_acceptances_work_status_idx").on(
+      table.workId,
+      table.status,
+    ),
+    index("production_acceptances_status_received_idx").on(
+      table.status,
+      table.receivedAt,
+    ),
+  ],
+);
+
+export const productionAcceptanceChecks = sqliteTable(
+  "production_acceptance_checks",
+  {
+    id: text("id").primaryKey(),
+    productionAcceptanceId: text("production_acceptance_id")
+      .notNull()
+      .references(() => productionAcceptances.id, { onDelete: "cascade" }),
+    category: text("category", {
+      enum: [
+        "identity",
+        "material_color",
+        "measurements",
+        "construction",
+        "finishing",
+        "labels",
+        "packaging",
+        "quantity",
+      ],
+    }).notNull(),
+    title: text("title").notNull(),
+    requirement: text("requirement").notNull().default(""),
+    result: text("result", {
+      enum: ["pending", "pass", "fail", "na"],
+    })
+      .notNull()
+      .default("pending"),
+    observation: text("observation").notNull().default(""),
+    critical: integer("critical", { mode: "boolean" })
+      .notNull()
+      .default(true),
+    sortOrder: integer("sort_order").notNull().default(0),
+    createdBy: text("created_by").notNull(),
+    createdAt: text("created_at").notNull().default(sql`CURRENT_TIMESTAMP`),
+    updatedAt: text("updated_at").notNull().default(sql`CURRENT_TIMESTAMP`),
+  },
+  (table) => [
+    uniqueIndex("production_acceptance_checks_acceptance_category_uidx").on(
+      table.productionAcceptanceId,
+      table.category,
+    ),
+    index("production_acceptance_checks_acceptance_sort_idx").on(
+      table.productionAcceptanceId,
+      table.sortOrder,
+    ),
+    index("production_acceptance_checks_result_idx").on(table.result),
+  ],
+);
+
+export const productionAcceptanceImages = sqliteTable(
+  "production_acceptance_images",
+  {
+    id: text("id").primaryKey(),
+    productionAcceptanceId: text("production_acceptance_id")
+      .notNull()
+      .references(() => productionAcceptances.id, { onDelete: "cascade" }),
+    imageKey: text("image_key").notNull().unique(),
+    imageType: text("image_type").notNull(),
+    imageSize: integer("image_size").notNull(),
+    angle: text("angle", {
+      enum: ["front", "back", "detail", "label", "packaging", "group", "other"],
+    })
+      .notNull()
+      .default("front"),
+    caption: text("caption").notNull().default(""),
+    altText: text("alt_text").notNull(),
+    status: text("status", { enum: ["active", "removed"] })
+      .notNull()
+      .default("active"),
+    sortOrder: integer("sort_order").notNull().default(0),
+    createdBy: text("created_by").notNull(),
+    createdAt: text("created_at").notNull().default(sql`CURRENT_TIMESTAMP`),
+    updatedAt: text("updated_at").notNull().default(sql`CURRENT_TIMESTAMP`),
+  },
+  (table) => [
+    index("production_acceptance_images_acceptance_sort_idx").on(
+      table.productionAcceptanceId,
+      table.sortOrder,
+    ),
+    index("production_acceptance_images_acceptance_status_idx").on(
+      table.productionAcceptanceId,
+      table.status,
+    ),
+  ],
+);
+
+export const provenanceDossiers = sqliteTable(
+  "provenance_dossiers",
+  {
+    id: text("id").primaryKey(),
+    dossierCode: text("dossier_code").notNull().unique(),
+    slug: text("slug").notNull().unique(),
+    productionAcceptanceId: text("production_acceptance_id")
+      .notNull()
+      .references(() => productionAcceptances.id, { onDelete: "restrict" }),
+    workId: text("work_id")
+      .notNull()
+      .references(() => works.id, { onDelete: "restrict" }),
+    revision: integer("revision").notNull().default(1),
+    status: text("status", {
+      enum: ["draft", "in_review", "published", "retired", "void"],
+    })
+      .notNull()
+      .default("draft"),
+    decision: text("decision", {
+      enum: ["pending", "publish", "revise", "hold"],
+    })
+      .notNull()
+      .default("pending"),
+    title: text("title").notNull().default(""),
+    subtitle: text("subtitle").notNull().default(""),
+    designStory: text("design_story").notNull().default(""),
+    materialDisclosure: text("material_disclosure").notNull().default(""),
+    makerDisclosure: text("maker_disclosure").notNull().default(""),
+    placeOfMaking: text("place_of_making").notNull().default(""),
+    madeAt: text("made_at"),
+    careGuidance: text("care_guidance").notNull().default(""),
+    repairGuidance: text("repair_guidance").notNull().default(""),
+    provenanceNote: text("provenance_note").notNull().default(""),
+    publicSummary: text("public_summary").notNull().default(""),
+    reviewedBy: text("reviewed_by").notNull().default(""),
+    reviewedAt: text("reviewed_at"),
+    publishedBy: text("published_by").notNull().default(""),
+    publishedAt: text("published_at"),
+    retiredAt: text("retired_at"),
+    createdBy: text("created_by").notNull(),
+    createdAt: text("created_at").notNull().default(sql`CURRENT_TIMESTAMP`),
+    updatedAt: text("updated_at").notNull().default(sql`CURRENT_TIMESTAMP`),
+  },
+  (table) => [
+    uniqueIndex("provenance_dossiers_acceptance_revision_uidx").on(
+      table.productionAcceptanceId,
+      table.revision,
+    ),
+    index("provenance_dossiers_work_status_idx").on(table.workId, table.status),
+    index("provenance_dossiers_status_published_idx").on(
+      table.status,
+      table.publishedAt,
+    ),
+  ],
+);
+
+export const provenanceDossierChecks = sqliteTable(
+  "provenance_dossier_checks",
+  {
+    id: text("id").primaryKey(),
+    provenanceDossierId: text("provenance_dossier_id")
+      .notNull()
+      .references(() => provenanceDossiers.id, { onDelete: "cascade" }),
+    category: text("category", {
+      enum: ["identity", "source", "materials", "maker", "care", "public_copy"],
+    }).notNull(),
+    title: text("title").notNull(),
+    requirement: text("requirement").notNull().default(""),
+    result: text("result", { enum: ["pending", "pass", "fail", "na"] })
+      .notNull()
+      .default("pending"),
+    observation: text("observation").notNull().default(""),
+    critical: integer("critical", { mode: "boolean" })
+      .notNull()
+      .default(true),
+    sortOrder: integer("sort_order").notNull().default(0),
+    createdBy: text("created_by").notNull(),
+    createdAt: text("created_at").notNull().default(sql`CURRENT_TIMESTAMP`),
+    updatedAt: text("updated_at").notNull().default(sql`CURRENT_TIMESTAMP`),
+  },
+  (table) => [
+    uniqueIndex("provenance_dossier_checks_dossier_category_uidx").on(
+      table.provenanceDossierId,
+      table.category,
+    ),
+    index("provenance_dossier_checks_dossier_sort_idx").on(
+      table.provenanceDossierId,
+      table.sortOrder,
+    ),
+    index("provenance_dossier_checks_result_idx").on(table.result),
+  ],
+);
+
+export const conservationReports = sqliteTable(
+  "conservation_reports",
+  {
+    id: text("id").primaryKey(),
+    reportCode: text("report_code").notNull().unique(),
+    sampleAssetId: text("sample_asset_id")
+      .notNull()
+      .references(() => sampleAssets.id, { onDelete: "restrict" }),
+    workId: text("work_id").references(() => works.id, {
+      onDelete: "set null",
+    }),
+    sequence: integer("sequence").notNull().default(1),
+    status: text("status", {
+      enum: ["draft", "in_review", "approved", "closed", "void"],
+    })
+      .notNull()
+      .default("draft"),
+    decision: text("decision", {
+      enum: ["pending", "monitor", "treat", "ready_for_use", "archive"],
+    })
+      .notNull()
+      .default("pending"),
+    assessedAt: text("assessed_at"),
+    assessmentLocation: text("assessment_location").notNull().default(""),
+    overallCondition: text("overall_condition", {
+      enum: ["not_checked", "excellent", "good", "worn", "damaged", "critical"],
+    })
+      .notNull()
+      .default("not_checked"),
+    conditionSummary: text("condition_summary").notNull().default(""),
+    proposedTreatment: text("proposed_treatment").notNull().default(""),
+    handlingRestriction: text("handling_restriction").notNull().default(""),
+    storageGuidance: text("storage_guidance").notNull().default(""),
+    environmentalNotes: text("environmental_notes").notNull().default(""),
+    nextReviewAt: text("next_review_at"),
+    treatmentCompletedAt: text("treatment_completed_at"),
+    approvalNote: text("approval_note").notNull().default(""),
+    approvedBy: text("approved_by").notNull().default(""),
+    approvedAt: text("approved_at"),
+    closedBy: text("closed_by").notNull().default(""),
+    closedAt: text("closed_at"),
+    createdBy: text("created_by").notNull(),
+    createdAt: text("created_at").notNull().default(sql`CURRENT_TIMESTAMP`),
+    updatedAt: text("updated_at").notNull().default(sql`CURRENT_TIMESTAMP`),
+  },
+  (table) => [
+    uniqueIndex("conservation_reports_asset_sequence_uidx").on(
+      table.sampleAssetId,
+      table.sequence,
+    ),
+    index("conservation_reports_asset_status_idx").on(
+      table.sampleAssetId,
+      table.status,
+    ),
+    index("conservation_reports_review_status_idx").on(
+      table.nextReviewAt,
+      table.status,
+    ),
+  ],
+);
+
+export const conservationReportChecks = sqliteTable(
+  "conservation_report_checks",
+  {
+    id: text("id").primaryKey(),
+    conservationReportId: text("conservation_report_id")
+      .notNull()
+      .references(() => conservationReports.id, { onDelete: "cascade" }),
+    category: text("category", {
+      enum: ["structure", "surface", "seams", "fastenings", "trim", "labels"],
+    }).notNull(),
+    title: text("title").notNull(),
+    requirement: text("requirement").notNull().default(""),
+    result: text("result", {
+      enum: ["pending", "stable", "attention", "treatment", "resolved", "na"],
+    })
+      .notNull()
+      .default("pending"),
+    severity: text("severity", {
+      enum: ["none", "low", "medium", "high", "critical"],
+    })
+      .notNull()
+      .default("none"),
+    observation: text("observation").notNull().default(""),
+    treatmentNote: text("treatment_note").notNull().default(""),
+    sortOrder: integer("sort_order").notNull().default(0),
+    createdBy: text("created_by").notNull(),
+    createdAt: text("created_at").notNull().default(sql`CURRENT_TIMESTAMP`),
+    updatedAt: text("updated_at").notNull().default(sql`CURRENT_TIMESTAMP`),
+  },
+  (table) => [
+    uniqueIndex("conservation_report_checks_report_category_uidx").on(
+      table.conservationReportId,
+      table.category,
+    ),
+    index("conservation_report_checks_report_sort_idx").on(
+      table.conservationReportId,
+      table.sortOrder,
+    ),
+    index("conservation_report_checks_result_severity_idx").on(
+      table.result,
+      table.severity,
+    ),
+  ],
+);
+
+export const conservationReportImages = sqliteTable(
+  "conservation_report_images",
+  {
+    id: text("id").primaryKey(),
+    conservationReportId: text("conservation_report_id")
+      .notNull()
+      .references(() => conservationReports.id, { onDelete: "cascade" }),
+    imageKey: text("image_key").notNull().unique(),
+    imageType: text("image_type").notNull(),
+    imageSize: integer("image_size").notNull(),
+    angle: text("angle", {
+      enum: ["overall", "front", "back", "interior", "detail", "label", "damage", "other"],
+    })
+      .notNull()
+      .default("overall"),
+    caption: text("caption").notNull().default(""),
+    altText: text("alt_text").notNull(),
+    status: text("status", { enum: ["active", "removed"] })
+      .notNull()
+      .default("active"),
+    sortOrder: integer("sort_order").notNull().default(0),
+    createdBy: text("created_by").notNull(),
+    createdAt: text("created_at").notNull().default(sql`CURRENT_TIMESTAMP`),
+    updatedAt: text("updated_at").notNull().default(sql`CURRENT_TIMESTAMP`),
+  },
+  (table) => [
+    index("conservation_report_images_report_sort_idx").on(
+      table.conservationReportId,
+      table.sortOrder,
+    ),
+    index("conservation_report_images_report_status_idx").on(
+      table.conservationReportId,
+      table.status,
+    ),
+  ],
+);
+
+export const curatorialProjects = sqliteTable(
+  "curatorial_projects",
+  {
+    id: text("id").primaryKey(),
+    projectCode: text("project_code").notNull().unique(),
+    title: text("title").notNull(),
+    status: text("status", { enum: ["draft", "in_review", "approved", "closed", "void"] }).notNull().default("draft"),
+    decision: text("decision", { enum: ["pending", "approve", "revise", "hold"] }).notNull().default("pending"),
+    curator: text("curator").notNull().default(""),
+    venueContext: text("venue_context").notNull().default(""),
+    audience: text("audience").notNull().default(""),
+    openingAt: text("opening_at"),
+    closingAt: text("closing_at"),
+    thesis: text("thesis").notNull().default(""),
+    narrative: text("narrative").notNull().default(""),
+    spatialNote: text("spatial_note").notNull().default(""),
+    selectionNote: text("selection_note").notNull().default(""),
+    approvalNote: text("approval_note").notNull().default(""),
+    approvedBy: text("approved_by").notNull().default(""),
+    approvedAt: text("approved_at"),
+    closedAt: text("closed_at"),
+    createdBy: text("created_by").notNull(),
+    createdAt: text("created_at").notNull().default(sql`CURRENT_TIMESTAMP`),
+    updatedAt: text("updated_at").notNull().default(sql`CURRENT_TIMESTAMP`),
+  },
+  (table) => [
+    index("curatorial_projects_status_opening_idx").on(table.status, table.openingAt),
+    index("curatorial_projects_updated_at_idx").on(table.updatedAt),
+  ],
+);
+
+export const curatorialSelections = sqliteTable(
+  "curatorial_selections",
+  {
+    id: text("id").primaryKey(),
+    curatorialProjectId: text("curatorial_project_id").notNull().references(() => curatorialProjects.id, { onDelete: "cascade" }),
+    sampleAssetId: text("sample_asset_id").notNull().references(() => sampleAssets.id, { onDelete: "restrict" }),
+    decision: text("decision", { enum: ["proposed", "include", "alternate", "hold", "exclude"] }).notNull().default("proposed"),
+    role: text("role", { enum: ["anchor", "dialogue", "context", "transition", "finale"] }).notNull().default("dialogue"),
+    sequence: integer("sequence").notNull().default(0),
+    rationale: text("rationale").notNull().default(""),
+    displayIntent: text("display_intent").notNull().default(""),
+    conservationNote: text("conservation_note").notNull().default(""),
+    createdBy: text("created_by").notNull(),
+    createdAt: text("created_at").notNull().default(sql`CURRENT_TIMESTAMP`),
+    updatedAt: text("updated_at").notNull().default(sql`CURRENT_TIMESTAMP`),
+  },
+  (table) => [
+    uniqueIndex("curatorial_selections_project_asset_uidx").on(table.curatorialProjectId, table.sampleAssetId),
+    index("curatorial_selections_project_sequence_idx").on(table.curatorialProjectId, table.sequence),
+    index("curatorial_selections_asset_decision_idx").on(table.sampleAssetId, table.decision),
+  ],
+);
+
+export const interpretationPackages = sqliteTable(
+  "interpretation_packages",
+  {
+    id: text("id").primaryKey(),
+    packageCode: text("package_code").notNull().unique(),
+    curatorialProjectId: text("curatorial_project_id")
+      .notNull()
+      .references(() => curatorialProjects.id, { onDelete: "restrict" }),
+    revision: integer("revision").notNull().default(1),
+    status: text("status", {
+      enum: ["draft", "in_review", "approved", "closed", "void"],
+    })
+      .notNull()
+      .default("draft"),
+    decision: text("decision", {
+      enum: ["pending", "approve", "revise", "hold"],
+    })
+      .notNull()
+      .default("pending"),
+    editor: text("editor").notNull().default(""),
+    primaryLanguage: text("primary_language").notNull().default("zh-CN"),
+    secondaryLanguage: text("secondary_language").notNull().default(""),
+    title: text("title").notNull().default(""),
+    subtitle: text("subtitle").notNull().default(""),
+    entranceText: text("entrance_text").notNull().default(""),
+    curatorialCredit: text("curatorial_credit").notNull().default(""),
+    acknowledgement: text("acknowledgement").notNull().default(""),
+    accessibilityNote: text("accessibility_note").notNull().default(""),
+    rightsNote: text("rights_note").notNull().default(""),
+    approvalNote: text("approval_note").notNull().default(""),
+    approvedBy: text("approved_by").notNull().default(""),
+    approvedAt: text("approved_at"),
+    closedAt: text("closed_at"),
+    createdBy: text("created_by").notNull(),
+    createdAt: text("created_at").notNull().default(sql`CURRENT_TIMESTAMP`),
+    updatedAt: text("updated_at").notNull().default(sql`CURRENT_TIMESTAMP`),
+  },
+  (table) => [
+    uniqueIndex("interpretation_packages_project_revision_uidx").on(
+      table.curatorialProjectId,
+      table.revision,
+    ),
+    index("interpretation_packages_status_updated_idx").on(
+      table.status,
+      table.updatedAt,
+    ),
+  ],
+);
+
+export const interpretationSections = sqliteTable(
+  "interpretation_sections",
+  {
+    id: text("id").primaryKey(),
+    interpretationPackageId: text("interpretation_package_id")
+      .notNull()
+      .references(() => interpretationPackages.id, { onDelete: "cascade" }),
+    sequence: integer("sequence").notNull().default(0),
+    titlePrimary: text("title_primary").notNull().default(""),
+    titleSecondary: text("title_secondary").notNull().default(""),
+    bodyPrimary: text("body_primary").notNull().default(""),
+    bodySecondary: text("body_secondary").notNull().default(""),
+    createdBy: text("created_by").notNull(),
+    createdAt: text("created_at").notNull().default(sql`CURRENT_TIMESTAMP`),
+    updatedAt: text("updated_at").notNull().default(sql`CURRENT_TIMESTAMP`),
+  },
+  (table) => [
+    index("interpretation_sections_package_sequence_idx").on(
+      table.interpretationPackageId,
+      table.sequence,
+    ),
+  ],
+);
+
+export const interpretationLabels = sqliteTable(
+  "interpretation_labels",
+  {
+    id: text("id").primaryKey(),
+    interpretationPackageId: text("interpretation_package_id")
+      .notNull()
+      .references(() => interpretationPackages.id, { onDelete: "cascade" }),
+    curatorialSelectionId: text("curatorial_selection_id")
+      .notNull()
+      .references(() => curatorialSelections.id, { onDelete: "restrict" }),
+    sequence: integer("sequence").notNull().default(0),
+    headline: text("headline").notNull().default(""),
+    bodyPrimary: text("body_primary").notNull().default(""),
+    bodySecondary: text("body_secondary").notNull().default(""),
+    objectFacts: text("object_facts").notNull().default(""),
+    creditLine: text("credit_line").notNull().default(""),
+    accessibilityText: text("accessibility_text").notNull().default(""),
+    sourceNote: text("source_note").notNull().default(""),
+    rightsStatus: text("rights_status", {
+      enum: ["unchecked", "cleared", "restricted", "not_required"],
+    })
+      .notNull()
+      .default("unchecked"),
+    createdBy: text("created_by").notNull(),
+    createdAt: text("created_at").notNull().default(sql`CURRENT_TIMESTAMP`),
+    updatedAt: text("updated_at").notNull().default(sql`CURRENT_TIMESTAMP`),
+  },
+  (table) => [
+    uniqueIndex("interpretation_labels_package_selection_uidx").on(
+      table.interpretationPackageId,
+      table.curatorialSelectionId,
+    ),
+    index("interpretation_labels_package_sequence_idx").on(
+      table.interpretationPackageId,
+      table.sequence,
+    ),
+  ],
+);
+
+export const exhibitionDeliveryPackages = sqliteTable(
+  "exhibition_delivery_packages",
+  {
+    id: text("id").primaryKey(),
+    deliveryCode: text("delivery_code").notNull().unique(),
+    interpretationPackageId: text("interpretation_package_id")
+      .notNull()
+      .references(() => interpretationPackages.id, { onDelete: "restrict" }),
+    revision: integer("revision").notNull().default(1),
+    status: text("status", {
+      enum: ["draft", "in_review", "approved", "closed", "void"],
+    })
+      .notNull()
+      .default("draft"),
+    decision: text("decision", {
+      enum: ["pending", "release", "revise", "hold"],
+    })
+      .notNull()
+      .default("pending"),
+    ownerName: text("owner_name").notNull().default(""),
+    destination: text("destination").notNull().default(""),
+    deliveryAt: text("delivery_at"),
+    masterTitle: text("master_title").notNull().default(""),
+    formatStandard: text("format_standard").notNull().default(""),
+    placementStandard: text("placement_standard").notNull().default(""),
+    accessibilityStandard: text("accessibility_standard").notNull().default(""),
+    rightsStandard: text("rights_standard").notNull().default(""),
+    handoffNote: text("handoff_note").notNull().default(""),
+    approvalNote: text("approval_note").notNull().default(""),
+    approvedBy: text("approved_by").notNull().default(""),
+    approvedAt: text("approved_at"),
+    closedAt: text("closed_at"),
+    createdBy: text("created_by").notNull(),
+    createdAt: text("created_at").notNull().default(sql`CURRENT_TIMESTAMP`),
+    updatedAt: text("updated_at").notNull().default(sql`CURRENT_TIMESTAMP`),
+  },
+  (table) => [
+    uniqueIndex("exhibition_delivery_packages_interpretation_revision_uidx").on(
+      table.interpretationPackageId,
+      table.revision,
+    ),
+    index("exhibition_delivery_packages_status_delivery_idx").on(
+      table.status,
+      table.deliveryAt,
+    ),
+    index("exhibition_delivery_packages_updated_at_idx").on(table.updatedAt),
+  ],
+);
+
+export const exhibitionDeliveryItems = sqliteTable(
+  "exhibition_delivery_items",
+  {
+    id: text("id").primaryKey(),
+    exhibitionDeliveryPackageId: text("exhibition_delivery_package_id")
+      .notNull()
+      .references(() => exhibitionDeliveryPackages.id, { onDelete: "cascade" }),
+    sourceType: text("source_type", {
+      enum: ["entrance", "section", "object_label", "credits", "accessibility", "rights"],
+    })
+      .notNull()
+      .default("entrance"),
+    sourceId: text("source_id").notNull(),
+    language: text("language").notNull().default("zh-CN"),
+    channel: text("channel", {
+      enum: ["wall_text", "object_label", "digital_guide", "print_guide", "press_reference", "internal_master"],
+    })
+      .notNull()
+      .default("wall_text"),
+    sequence: integer("sequence").notNull().default(0),
+    title: text("title").notNull().default(""),
+    placement: text("placement").notNull().default(""),
+    formatSpec: text("format_spec").notNull().default(""),
+    proofStatus: text("proof_status", {
+      enum: ["draft", "ready", "hold", "omitted"],
+    })
+      .notNull()
+      .default("draft"),
+    proofNote: text("proof_note").notNull().default(""),
+    handoffNote: text("handoff_note").notNull().default(""),
+    createdBy: text("created_by").notNull(),
+    createdAt: text("created_at").notNull().default(sql`CURRENT_TIMESTAMP`),
+    updatedAt: text("updated_at").notNull().default(sql`CURRENT_TIMESTAMP`),
+  },
+  (table) => [
+    uniqueIndex("exhibition_delivery_items_source_language_uidx").on(
+      table.exhibitionDeliveryPackageId,
+      table.sourceType,
+      table.sourceId,
+      table.language,
+    ),
+    index("exhibition_delivery_items_package_sequence_idx").on(
+      table.exhibitionDeliveryPackageId,
+      table.sequence,
+    ),
+    index("exhibition_delivery_items_proof_status_idx").on(table.proofStatus),
+  ],
+);
+
+export const exhibitionInstallationGates = sqliteTable(
+  "exhibition_installation_gates",
+  {
+    id: text("id").primaryKey(),
+    gateCode: text("gate_code").notNull().unique(),
+    exhibitionDeliveryPackageId: text("exhibition_delivery_package_id")
+      .notNull()
+      .references(() => exhibitionDeliveryPackages.id, { onDelete: "restrict" }),
+    revision: integer("revision").notNull().default(1),
+    status: text("status", {
+      enum: ["draft", "in_review", "approved", "closed", "void"],
+    })
+      .notNull()
+      .default("draft"),
+    decision: text("decision", {
+      enum: ["pending", "accept", "rework", "hold"],
+    })
+      .notNull()
+      .default("pending"),
+    leadName: text("lead_name").notNull().default(""),
+    venue: text("venue").notNull().default(""),
+    inspectionAt: text("inspection_at"),
+    openingAt: text("opening_at"),
+    installationScope: text("installation_scope").notNull().default(""),
+    accessibilityObservation: text("accessibility_observation").notNull().default(""),
+    rightsObservation: text("rights_observation").notNull().default(""),
+    safetyNote: text("safety_note").notNull().default(""),
+    handoverNote: text("handover_note").notNull().default(""),
+    approvalNote: text("approval_note").notNull().default(""),
+    approvedBy: text("approved_by").notNull().default(""),
+    approvedAt: text("approved_at"),
+    closedAt: text("closed_at"),
+    createdBy: text("created_by").notNull(),
+    createdAt: text("created_at").notNull().default(sql`CURRENT_TIMESTAMP`),
+    updatedAt: text("updated_at").notNull().default(sql`CURRENT_TIMESTAMP`),
+  },
+  (table) => [
+    uniqueIndex("exhibition_installation_gates_delivery_revision_uidx").on(
+      table.exhibitionDeliveryPackageId,
+      table.revision,
+    ),
+    index("exhibition_installation_gates_status_inspection_idx").on(
+      table.status,
+      table.inspectionAt,
+    ),
+    index("exhibition_installation_gates_updated_at_idx").on(table.updatedAt),
+  ],
+);
+
+export const exhibitionInstallationChecks = sqliteTable(
+  "exhibition_installation_checks",
+  {
+    id: text("id").primaryKey(),
+    exhibitionInstallationGateId: text("exhibition_installation_gate_id")
+      .notNull()
+      .references(() => exhibitionInstallationGates.id, { onDelete: "cascade" }),
+    exhibitionDeliveryItemId: text("exhibition_delivery_item_id")
+      .notNull()
+      .references(() => exhibitionDeliveryItems.id, { onDelete: "restrict" }),
+    sequence: integer("sequence").notNull().default(0),
+    result: text("result", {
+      enum: ["pending", "pass", "attention", "blocked", "not_installed"],
+    })
+      .notNull()
+      .default("pending"),
+    observedPlacement: text("observed_placement").notNull().default(""),
+    observedFormat: text("observed_format").notNull().default(""),
+    observation: text("observation").notNull().default(""),
+    correctiveAction: text("corrective_action").notNull().default(""),
+    createdBy: text("created_by").notNull(),
+    createdAt: text("created_at").notNull().default(sql`CURRENT_TIMESTAMP`),
+    updatedAt: text("updated_at").notNull().default(sql`CURRENT_TIMESTAMP`),
+  },
+  (table) => [
+    uniqueIndex("exhibition_installation_checks_gate_item_uidx").on(
+      table.exhibitionInstallationGateId,
+      table.exhibitionDeliveryItemId,
+    ),
+    index("exhibition_installation_checks_gate_sequence_idx").on(
+      table.exhibitionInstallationGateId,
+      table.sequence,
+    ),
+    index("exhibition_installation_checks_result_idx").on(table.result),
+  ],
+);
+
+export const exhibitionInstallationImages = sqliteTable(
+  "exhibition_installation_images",
+  {
+    id: text("id").primaryKey(),
+    exhibitionInstallationGateId: text("exhibition_installation_gate_id")
+      .notNull()
+      .references(() => exhibitionInstallationGates.id, { onDelete: "cascade" }),
+    imageKey: text("image_key").notNull().unique(),
+    imageType: text("image_type").notNull(),
+    imageSize: integer("image_size").notNull(),
+    angle: text("angle", {
+      enum: ["overview", "wall_text", "object_label", "digital_guide", "accessibility", "rights", "detail"],
+    })
+      .notNull()
+      .default("overview"),
+    caption: text("caption").notNull().default(""),
+    altText: text("alt_text").notNull(),
+    status: text("status", { enum: ["active", "removed"] })
+      .notNull()
+      .default("active"),
+    sortOrder: integer("sort_order").notNull().default(0),
+    createdBy: text("created_by").notNull(),
+    createdAt: text("created_at").notNull().default(sql`CURRENT_TIMESTAMP`),
+    updatedAt: text("updated_at").notNull().default(sql`CURRENT_TIMESTAMP`),
+  },
+  (table) => [
+    index("exhibition_installation_images_gate_sort_idx").on(
+      table.exhibitionInstallationGateId,
+      table.sortOrder,
+    ),
+    index("exhibition_installation_images_gate_status_idx").on(
+      table.exhibitionInstallationGateId,
+      table.status,
+    ),
+  ],
+);
+
+export const exhibitionReadinessPlans = sqliteTable(
+  "exhibition_readiness_plans",
+  {
+    id: text("id").primaryKey(),
+    planCode: text("plan_code").notNull().unique(),
+    sampleAssetId: text("sample_asset_id")
+      .notNull()
+      .references(() => sampleAssets.id, { onDelete: "restrict" }),
+    conservationReportId: text("conservation_report_id")
+      .notNull()
+      .references(() => conservationReports.id, { onDelete: "restrict" }),
+    workId: text("work_id").references(() => works.id, {
+      onDelete: "set null",
+    }),
+    sequence: integer("sequence").notNull().default(1),
+    title: text("title").notNull().default(""),
+    venue: text("venue").notNull().default(""),
+    purpose: text("purpose", {
+      enum: ["exhibition", "editorial", "press", "presentation", "archive_view"],
+    })
+      .notNull()
+      .default("exhibition"),
+    status: text("status", {
+      enum: ["draft", "in_review", "approved", "closed", "void"],
+    })
+      .notNull()
+      .default("draft"),
+    decision: text("decision", {
+      enum: ["pending", "ready", "ready_with_limits", "hold", "not_for_display"],
+    })
+      .notNull()
+      .default("pending"),
+    installAt: text("install_at"),
+    deinstallAt: text("deinstall_at"),
+    displayMode: text("display_mode", {
+      enum: ["mannequin", "flat", "hanging", "case", "custom"],
+    })
+      .notNull()
+      .default("mannequin"),
+    mountingMethod: text("mounting_method").notNull().default(""),
+    supportRequirements: text("support_requirements").notNull().default(""),
+    dressingInstructions: text("dressing_instructions").notNull().default(""),
+    maxLux: integer("max_lux").notNull().default(50),
+    uvLimit: integer("uv_limit").notNull().default(75),
+    rhMin: integer("rh_min").notNull().default(45),
+    rhMax: integer("rh_max").notNull().default(55),
+    tempMin: integer("temp_min").notNull().default(18),
+    tempMax: integer("temp_max").notNull().default(21),
+    maxDisplayDays: integer("max_display_days").notNull().default(90),
+    handlingTeam: text("handling_team").notNull().default(""),
+    securityBarrier: text("security_barrier").notNull().default(""),
+    emergencyInstructions: text("emergency_instructions").notNull().default(""),
+    installationNotes: text("installation_notes").notNull().default(""),
+    approvalNote: text("approval_note").notNull().default(""),
+    approvedBy: text("approved_by").notNull().default(""),
+    approvedAt: text("approved_at"),
+    closedBy: text("closed_by").notNull().default(""),
+    closedAt: text("closed_at"),
+    createdBy: text("created_by").notNull(),
+    createdAt: text("created_at").notNull().default(sql`CURRENT_TIMESTAMP`),
+    updatedAt: text("updated_at").notNull().default(sql`CURRENT_TIMESTAMP`),
+  },
+  (table) => [
+    uniqueIndex("exhibition_readiness_plans_asset_sequence_uidx").on(
+      table.sampleAssetId,
+      table.sequence,
+    ),
+    index("exhibition_readiness_plans_status_install_idx").on(
+      table.status,
+      table.installAt,
+    ),
+    index("exhibition_readiness_plans_deinstall_status_idx").on(
+      table.deinstallAt,
+      table.status,
+    ),
+    index("exhibition_readiness_plans_conservation_idx").on(
+      table.conservationReportId,
+    ),
+  ],
+);
+
+export const exhibitionReadinessChecks = sqliteTable(
+  "exhibition_readiness_checks",
+  {
+    id: text("id").primaryKey(),
+    exhibitionReadinessPlanId: text("exhibition_readiness_plan_id")
+      .notNull()
+      .references(() => exhibitionReadinessPlans.id, { onDelete: "cascade" }),
+    category: text("category", {
+      enum: ["condition", "support", "light", "climate", "handling", "security", "deinstallation"],
+    }).notNull(),
+    title: text("title").notNull(),
+    requirement: text("requirement").notNull().default(""),
+    result: text("result", {
+      enum: ["pending", "pass", "attention", "blocked", "na"],
+    })
+      .notNull()
+      .default("pending"),
+    observation: text("observation").notNull().default(""),
+    critical: integer("critical", { mode: "boolean" }).notNull().default(true),
+    sortOrder: integer("sort_order").notNull().default(0),
+    createdBy: text("created_by").notNull(),
+    createdAt: text("created_at").notNull().default(sql`CURRENT_TIMESTAMP`),
+    updatedAt: text("updated_at").notNull().default(sql`CURRENT_TIMESTAMP`),
+  },
+  (table) => [
+    uniqueIndex("exhibition_readiness_checks_plan_category_uidx").on(
+      table.exhibitionReadinessPlanId,
+      table.category,
+    ),
+    index("exhibition_readiness_checks_plan_sort_idx").on(
+      table.exhibitionReadinessPlanId,
+      table.sortOrder,
+    ),
+    index("exhibition_readiness_checks_result_idx").on(table.result),
+  ],
+);
+
+export const exhibitionReadinessImages = sqliteTable(
+  "exhibition_readiness_images",
+  {
+    id: text("id").primaryKey(),
+    exhibitionReadinessPlanId: text("exhibition_readiness_plan_id")
+      .notNull()
+      .references(() => exhibitionReadinessPlans.id, { onDelete: "cascade" }),
+    imageKey: text("image_key").notNull().unique(),
+    imageType: text("image_type").notNull(),
+    imageSize: integer("image_size").notNull(),
+    angle: text("angle", {
+      enum: ["overall", "mount", "front", "back", "detail", "installation", "environment", "other"],
+    })
+      .notNull()
+      .default("overall"),
+    caption: text("caption").notNull().default(""),
+    altText: text("alt_text").notNull(),
+    status: text("status", { enum: ["active", "removed"] })
+      .notNull()
+      .default("active"),
+    sortOrder: integer("sort_order").notNull().default(0),
+    createdBy: text("created_by").notNull(),
+    createdAt: text("created_at").notNull().default(sql`CURRENT_TIMESTAMP`),
+    updatedAt: text("updated_at").notNull().default(sql`CURRENT_TIMESTAMP`),
+  },
+  (table) => [
+    index("exhibition_readiness_images_plan_sort_idx").on(
+      table.exhibitionReadinessPlanId,
+      table.sortOrder,
+    ),
+    index("exhibition_readiness_images_plan_status_idx").on(
+      table.exhibitionReadinessPlanId,
+      table.status,
+    ),
+  ],
+);
+
+export const exhibitionOpeningGates = sqliteTable(
+  "exhibition_opening_gates",
+  {
+    id: text("id").primaryKey(),
+    openingCode: text("opening_code").notNull().unique(),
+    curatorialProjectId: text("curatorial_project_id").notNull().references(() => curatorialProjects.id, { onDelete: "restrict" }),
+    exhibitionInstallationGateId: text("exhibition_installation_gate_id").notNull().references(() => exhibitionInstallationGates.id, { onDelete: "restrict" }),
+    revision: integer("revision").notNull().default(1),
+    status: text("status", { enum: ["draft", "in_review", "approved", "closed", "void"] }).notNull().default("draft"),
+    decision: text("decision", { enum: ["pending", "open", "rework", "hold"] }).notNull().default("pending"),
+    openingLead: text("opening_lead").notNull().default(""),
+    venue: text("venue").notNull().default(""),
+    plannedOpeningAt: text("planned_opening_at"),
+    plannedClosingAt: text("planned_closing_at"),
+    operatingBrief: text("operating_brief").notNull().default(""),
+    dailyCheckCadence: text("daily_check_cadence").notNull().default(""),
+    staffHandover: text("staff_handover").notNull().default(""),
+    visitorAccessibilityPlan: text("visitor_accessibility_plan").notNull().default(""),
+    incidentEscalation: text("incident_escalation").notNull().default(""),
+    emergencyPauseRule: text("emergency_pause_rule").notNull().default(""),
+    approvalNote: text("approval_note").notNull().default(""),
+    approvedBy: text("approved_by").notNull().default(""),
+    approvedAt: text("approved_at"),
+    closedAt: text("closed_at"),
+    createdBy: text("created_by").notNull(),
+    createdAt: text("created_at").notNull().default(sql`CURRENT_TIMESTAMP`),
+    updatedAt: text("updated_at").notNull().default(sql`CURRENT_TIMESTAMP`),
+  },
+  (table) => [
+    uniqueIndex("exhibition_opening_gates_project_revision_uidx").on(table.curatorialProjectId, table.revision),
+    index("exhibition_opening_gates_status_opening_idx").on(table.status, table.plannedOpeningAt),
+    index("exhibition_opening_gates_updated_at_idx").on(table.updatedAt),
+  ],
+);
+
+export const exhibitionOpeningItems = sqliteTable(
+  "exhibition_opening_items",
+  {
+    id: text("id").primaryKey(),
+    exhibitionOpeningGateId: text("exhibition_opening_gate_id").notNull().references(() => exhibitionOpeningGates.id, { onDelete: "cascade" }),
+    curatorialSelectionId: text("curatorial_selection_id").notNull().references(() => curatorialSelections.id, { onDelete: "restrict" }),
+    exhibitionReadinessPlanId: text("exhibition_readiness_plan_id").references(() => exhibitionReadinessPlans.id, { onDelete: "restrict" }),
+    sequence: integer("sequence").notNull().default(0),
+    result: text("result", { enum: ["pending", "ready", "attention", "blocked"] }).notNull().default("pending"),
+    displayLocation: text("display_location").notNull().default(""),
+    readinessNote: text("readiness_note").notNull().default(""),
+    handoverNote: text("handover_note").notNull().default(""),
+    createdBy: text("created_by").notNull(),
+    createdAt: text("created_at").notNull().default(sql`CURRENT_TIMESTAMP`),
+    updatedAt: text("updated_at").notNull().default(sql`CURRENT_TIMESTAMP`),
+  },
+  (table) => [
+    uniqueIndex("exhibition_opening_items_gate_selection_uidx").on(table.exhibitionOpeningGateId, table.curatorialSelectionId),
+    index("exhibition_opening_items_gate_sequence_idx").on(table.exhibitionOpeningGateId, table.sequence),
+    index("exhibition_opening_items_result_idx").on(table.result),
+  ],
+);
+
+export const exhibitionWatches = sqliteTable(
+  "exhibition_watches",
+  {
+    id: text("id").primaryKey(),
+    watchCode: text("watch_code").notNull().unique(),
+    exhibitionReadinessPlanId: text("exhibition_readiness_plan_id")
+      .notNull()
+      .unique()
+      .references(() => exhibitionReadinessPlans.id, { onDelete: "restrict" }),
+    sampleAssetId: text("sample_asset_id")
+      .notNull()
+      .references(() => sampleAssets.id, { onDelete: "restrict" }),
+    status: text("status", {
+      enum: ["active", "paused", "deinstalled", "closed"],
+    })
+      .notNull()
+      .default("active"),
+    decision: text("decision", {
+      enum: ["pending", "continue", "continue_with_limits", "pause", "deinstall_now"],
+    })
+      .notNull()
+      .default("pending"),
+    monitoringIntervalHours: integer("monitoring_interval_hours")
+      .notNull()
+      .default(24),
+    steward: text("steward").notNull().default(""),
+    openingCondition: text("opening_condition").notNull().default(""),
+    decisionNote: text("decision_note").notNull().default(""),
+    deinstallationCondition: text("deinstallation_condition").notNull().default(""),
+    returnLocation: text("return_location").notNull().default(""),
+    openedAt: text("opened_at").notNull(),
+    lastObservedAt: text("last_observed_at"),
+    deinstalledAt: text("deinstalled_at"),
+    closedBy: text("closed_by").notNull().default(""),
+    closedAt: text("closed_at"),
+    createdBy: text("created_by").notNull(),
+    createdAt: text("created_at").notNull().default(sql`CURRENT_TIMESTAMP`),
+    updatedAt: text("updated_at").notNull().default(sql`CURRENT_TIMESTAMP`),
+  },
+  (table) => [
+    index("exhibition_watches_status_observed_idx").on(
+      table.status,
+      table.lastObservedAt,
+    ),
+    index("exhibition_watches_asset_idx").on(table.sampleAssetId),
+  ],
+);
+
+export const exhibitionWatchObservations = sqliteTable(
+  "exhibition_watch_observations",
+  {
+    id: text("id").primaryKey(),
+    exhibitionWatchId: text("exhibition_watch_id")
+      .notNull()
+      .references(() => exhibitionWatches.id, { onDelete: "cascade" }),
+    observedAt: text("observed_at").notNull(),
+    lux: integer("lux"),
+    uv: integer("uv"),
+    rh: integer("rh"),
+    temperatureTenth: integer("temperature_tenth"),
+    conditionResult: text("condition_result", {
+      enum: ["stable", "attention", "critical"],
+    })
+      .notNull()
+      .default("stable"),
+    supportResult: text("support_result", {
+      enum: ["stable", "attention", "critical"],
+    })
+      .notNull()
+      .default("stable"),
+    pestResult: text("pest_result", {
+      enum: ["none", "signs", "confirmed"],
+    })
+      .notNull()
+      .default("none"),
+    incidentType: text("incident_type", {
+      enum: ["none", "physical", "climate", "light", "security", "pest", "handling", "other"],
+    })
+      .notNull()
+      .default("none"),
+    observation: text("observation").notNull().default(""),
+    actionTaken: text("action_taken").notNull().default(""),
+    disposition: text("disposition", {
+      enum: ["continue", "limit", "pause", "deinstall", "conservator_review"],
+    })
+      .notNull()
+      .default("continue"),
+    createdBy: text("created_by").notNull(),
+    createdAt: text("created_at").notNull().default(sql`CURRENT_TIMESTAMP`),
+  },
+  (table) => [
+    index("exhibition_watch_observations_watch_time_idx").on(
+      table.exhibitionWatchId,
+      table.observedAt,
+    ),
+    index("exhibition_watch_observations_incident_idx").on(
+      table.incidentType,
+      table.conditionResult,
+    ),
+  ],
+);
+
+export const exhibitionWatchImages = sqliteTable(
+  "exhibition_watch_images",
+  {
+    id: text("id").primaryKey(),
+    exhibitionWatchId: text("exhibition_watch_id")
+      .notNull()
+      .references(() => exhibitionWatches.id, { onDelete: "cascade" }),
+    observationId: text("observation_id").references(
+      () => exhibitionWatchObservations.id,
+      { onDelete: "set null" },
+    ),
+    imageKey: text("image_key").notNull().unique(),
+    imageType: text("image_type").notNull(),
+    imageSize: integer("image_size").notNull(),
+    angle: text("angle", {
+      enum: ["overall", "condition", "support", "environment", "incident", "deinstallation", "other"],
+    })
+      .notNull()
+      .default("overall"),
+    caption: text("caption").notNull().default(""),
+    altText: text("alt_text").notNull(),
+    status: text("status", { enum: ["active", "removed"] })
+      .notNull()
+      .default("active"),
+    sortOrder: integer("sort_order").notNull().default(0),
+    createdBy: text("created_by").notNull(),
+    createdAt: text("created_at").notNull().default(sql`CURRENT_TIMESTAMP`),
+    updatedAt: text("updated_at").notNull().default(sql`CURRENT_TIMESTAMP`),
+  },
+  (table) => [
+    index("exhibition_watch_images_watch_sort_idx").on(
+      table.exhibitionWatchId,
+      table.sortOrder,
+    ),
+    index("exhibition_watch_images_observation_idx").on(table.observationId),
+  ],
+);
+
+export const exhibitionRecoveries = sqliteTable(
+  "exhibition_recoveries",
+  {
+    id: text("id").primaryKey(),
+    recoveryCode: text("recovery_code").notNull().unique(),
+    exhibitionWatchId: text("exhibition_watch_id")
+      .notNull()
+      .unique()
+      .references(() => exhibitionWatches.id, { onDelete: "restrict" }),
+    sampleAssetId: text("sample_asset_id")
+      .notNull()
+      .references(() => sampleAssets.id, { onDelete: "restrict" }),
+    status: text("status", {
+      enum: ["intake", "stabilizing", "in_review", "released", "referred", "void"],
+    })
+      .notNull()
+      .default("intake"),
+    decision: text("decision", {
+      enum: ["pending", "return_to_storage", "rest_then_store", "conservation_review", "quarantine"],
+    })
+      .notNull()
+      .default("pending"),
+    receivedAt: text("received_at"),
+    handler: text("handler").notNull().default(""),
+    intakeLocation: text("intake_location").notNull().default(""),
+    packingCondition: text("packing_condition").notNull().default(""),
+    transitCondition: text("transit_condition").notNull().default(""),
+    unpackingObservation: text("unpacking_observation").notNull().default(""),
+    supportRemovalNote: text("support_removal_note").notNull().default(""),
+    postDisplayCondition: text("post_display_condition").notNull().default(""),
+    acclimatizationUntil: text("acclimatization_until"),
+    treatmentRequired: integer("treatment_required", { mode: "boolean" })
+      .notNull()
+      .default(false),
+    treatmentNote: text("treatment_note").notNull().default(""),
+    storageLocation: text("storage_location").notNull().default(""),
+    recoveryNote: text("recovery_note").notNull().default(""),
+    releasedBy: text("released_by").notNull().default(""),
+    releasedAt: text("released_at"),
+    referredAt: text("referred_at"),
+    createdBy: text("created_by").notNull(),
+    createdAt: text("created_at").notNull().default(sql`CURRENT_TIMESTAMP`),
+    updatedAt: text("updated_at").notNull().default(sql`CURRENT_TIMESTAMP`),
+  },
+  (table) => [
+    index("exhibition_recoveries_status_received_idx").on(table.status, table.receivedAt),
+    index("exhibition_recoveries_asset_idx").on(table.sampleAssetId),
+    index("exhibition_recoveries_stabilization_idx").on(table.status, table.acclimatizationUntil),
+  ],
+);
+
+export const exhibitionRecoveryChecks = sqliteTable(
+  "exhibition_recovery_checks",
+  {
+    id: text("id").primaryKey(),
+    exhibitionRecoveryId: text("exhibition_recovery_id")
+      .notNull()
+      .references(() => exhibitionRecoveries.id, { onDelete: "cascade" }),
+    category: text("category", {
+      enum: ["custody", "packing", "condition", "support", "stabilization", "storage"],
+    }).notNull(),
+    title: text("title").notNull(),
+    requirement: text("requirement").notNull().default(""),
+    result: text("result", {
+      enum: ["pending", "pass", "attention", "blocked", "na"],
+    })
+      .notNull()
+      .default("pending"),
+    observation: text("observation").notNull().default(""),
+    critical: integer("critical", { mode: "boolean" }).notNull().default(true),
+    sortOrder: integer("sort_order").notNull().default(0),
+    createdBy: text("created_by").notNull(),
+    createdAt: text("created_at").notNull().default(sql`CURRENT_TIMESTAMP`),
+    updatedAt: text("updated_at").notNull().default(sql`CURRENT_TIMESTAMP`),
+  },
+  (table) => [
+    uniqueIndex("exhibition_recovery_checks_recovery_category_uidx").on(
+      table.exhibitionRecoveryId,
+      table.category,
+    ),
+    index("exhibition_recovery_checks_recovery_sort_idx").on(
+      table.exhibitionRecoveryId,
+      table.sortOrder,
+    ),
+    index("exhibition_recovery_checks_result_idx").on(table.result),
+  ],
+);
+
+export const exhibitionRecoveryImages = sqliteTable(
+  "exhibition_recovery_images",
+  {
+    id: text("id").primaryKey(),
+    exhibitionRecoveryId: text("exhibition_recovery_id")
+      .notNull()
+      .references(() => exhibitionRecoveries.id, { onDelete: "cascade" }),
+    imageKey: text("image_key").notNull().unique(),
+    imageType: text("image_type").notNull(),
+    imageSize: integer("image_size").notNull(),
+    angle: text("angle", {
+      enum: ["intake", "unpacking", "condition", "support", "packing", "storage", "other"],
+    })
+      .notNull()
+      .default("intake"),
+    caption: text("caption").notNull().default(""),
+    altText: text("alt_text").notNull(),
+    status: text("status", { enum: ["active", "removed"] })
+      .notNull()
+      .default("active"),
+    sortOrder: integer("sort_order").notNull().default(0),
+    createdBy: text("created_by").notNull(),
+    createdAt: text("created_at").notNull().default(sql`CURRENT_TIMESTAMP`),
+    updatedAt: text("updated_at").notNull().default(sql`CURRENT_TIMESTAMP`),
+  },
+  (table) => [
+    index("exhibition_recovery_images_recovery_sort_idx").on(
+      table.exhibitionRecoveryId,
+      table.sortOrder,
+    ),
+    index("exhibition_recovery_images_recovery_status_idx").on(
+      table.exhibitionRecoveryId,
+      table.status,
+    ),
+  ],
+);
+
 export const designReviews = sqliteTable(
   "design_reviews",
   {
@@ -2288,6 +3531,97 @@ export const archiveSnapshots = sqliteTable(
     )
       .notNull()
       .default(0),
+    productionAcceptanceCount: integer("production_acceptance_count")
+      .notNull()
+      .default(0),
+    productionAcceptanceCheckCount: integer(
+      "production_acceptance_check_count",
+    )
+      .notNull()
+      .default(0),
+    productionAcceptanceImageCount: integer(
+      "production_acceptance_image_count",
+    )
+      .notNull()
+      .default(0),
+    provenanceDossierCount: integer("provenance_dossier_count")
+      .notNull()
+      .default(0),
+    provenanceDossierCheckCount: integer("provenance_dossier_check_count")
+      .notNull()
+      .default(0),
+    conservationReportCount: integer("conservation_report_count")
+      .notNull()
+      .default(0),
+    conservationReportCheckCount: integer("conservation_report_check_count")
+      .notNull()
+      .default(0),
+    conservationReportImageCount: integer("conservation_report_image_count")
+      .notNull()
+      .default(0),
+    exhibitionReadinessPlanCount: integer("exhibition_readiness_plan_count")
+      .notNull()
+      .default(0),
+    exhibitionReadinessCheckCount: integer("exhibition_readiness_check_count")
+      .notNull()
+      .default(0),
+    exhibitionReadinessImageCount: integer("exhibition_readiness_image_count")
+      .notNull()
+      .default(0),
+    exhibitionWatchCount: integer("exhibition_watch_count")
+      .notNull()
+      .default(0),
+    exhibitionWatchObservationCount: integer("exhibition_watch_observation_count")
+      .notNull()
+      .default(0),
+    exhibitionWatchImageCount: integer("exhibition_watch_image_count")
+      .notNull()
+      .default(0),
+    exhibitionRecoveryCount: integer("exhibition_recovery_count")
+      .notNull()
+      .default(0),
+    exhibitionRecoveryCheckCount: integer("exhibition_recovery_check_count")
+      .notNull()
+      .default(0),
+    exhibitionRecoveryImageCount: integer("exhibition_recovery_image_count")
+      .notNull()
+      .default(0),
+    curatorialProjectCount: integer("curatorial_project_count")
+      .notNull()
+      .default(0),
+    curatorialSelectionCount: integer("curatorial_selection_count")
+      .notNull()
+      .default(0),
+    interpretationPackageCount: integer("interpretation_package_count")
+      .notNull()
+      .default(0),
+    interpretationSectionCount: integer("interpretation_section_count")
+      .notNull()
+      .default(0),
+    interpretationLabelCount: integer("interpretation_label_count")
+      .notNull()
+      .default(0),
+    exhibitionDeliveryPackageCount: integer("exhibition_delivery_package_count")
+      .notNull()
+      .default(0),
+    exhibitionDeliveryItemCount: integer("exhibition_delivery_item_count")
+      .notNull()
+      .default(0),
+    exhibitionInstallationGateCount: integer("exhibition_installation_gate_count")
+      .notNull()
+      .default(0),
+    exhibitionInstallationCheckCount: integer("exhibition_installation_check_count")
+      .notNull()
+      .default(0),
+    exhibitionInstallationImageCount: integer("exhibition_installation_image_count")
+      .notNull()
+      .default(0),
+    exhibitionOpeningGateCount: integer("exhibition_opening_gate_count")
+      .notNull()
+      .default(0),
+    exhibitionOpeningItemCount: integer("exhibition_opening_item_count")
+      .notNull()
+      .default(0),
     mediaCount: integer("media_count").notNull().default(0),
     mediaBytes: integer("media_bytes").notNull().default(0),
     createdBy: text("created_by").notNull(),
@@ -2392,5 +3726,74 @@ export type ProductionExceptionAction =
   typeof productionExceptionActions.$inferSelect;
 export type NewProductionExceptionAction =
   typeof productionExceptionActions.$inferInsert;
+export type ProductionAcceptance = typeof productionAcceptances.$inferSelect;
+export type NewProductionAcceptance =
+  typeof productionAcceptances.$inferInsert;
+export type ProductionAcceptanceCheck =
+  typeof productionAcceptanceChecks.$inferSelect;
+export type NewProductionAcceptanceCheck =
+  typeof productionAcceptanceChecks.$inferInsert;
+export type ProductionAcceptanceImage =
+  typeof productionAcceptanceImages.$inferSelect;
+export type NewProductionAcceptanceImage =
+  typeof productionAcceptanceImages.$inferInsert;
+export type ProvenanceDossier = typeof provenanceDossiers.$inferSelect;
+export type NewProvenanceDossier = typeof provenanceDossiers.$inferInsert;
+export type ProvenanceDossierCheck =
+  typeof provenanceDossierChecks.$inferSelect;
+export type NewProvenanceDossierCheck =
+  typeof provenanceDossierChecks.$inferInsert;
+export type ConservationReport = typeof conservationReports.$inferSelect;
+export type NewConservationReport = typeof conservationReports.$inferInsert;
+export type ConservationReportCheck =
+  typeof conservationReportChecks.$inferSelect;
+export type NewConservationReportCheck =
+  typeof conservationReportChecks.$inferInsert;
+export type ConservationReportImage =
+  typeof conservationReportImages.$inferSelect;
+export type NewConservationReportImage =
+  typeof conservationReportImages.$inferInsert;
+export type CuratorialProject = typeof curatorialProjects.$inferSelect;
+export type NewCuratorialProject = typeof curatorialProjects.$inferInsert;
+export type CuratorialSelection = typeof curatorialSelections.$inferSelect;
+export type NewCuratorialSelection = typeof curatorialSelections.$inferInsert;
+export type InterpretationPackage = typeof interpretationPackages.$inferSelect;
+export type NewInterpretationPackage = typeof interpretationPackages.$inferInsert;
+export type InterpretationSection = typeof interpretationSections.$inferSelect;
+export type NewInterpretationSection = typeof interpretationSections.$inferInsert;
+export type InterpretationLabel = typeof interpretationLabels.$inferSelect;
+export type NewInterpretationLabel = typeof interpretationLabels.$inferInsert;
+export type ExhibitionDeliveryPackage = typeof exhibitionDeliveryPackages.$inferSelect;
+export type NewExhibitionDeliveryPackage = typeof exhibitionDeliveryPackages.$inferInsert;
+export type ExhibitionDeliveryItem = typeof exhibitionDeliveryItems.$inferSelect;
+export type NewExhibitionDeliveryItem = typeof exhibitionDeliveryItems.$inferInsert;
+export type ExhibitionInstallationGate = typeof exhibitionInstallationGates.$inferSelect;
+export type NewExhibitionInstallationGate = typeof exhibitionInstallationGates.$inferInsert;
+export type ExhibitionInstallationCheck = typeof exhibitionInstallationChecks.$inferSelect;
+export type NewExhibitionInstallationCheck = typeof exhibitionInstallationChecks.$inferInsert;
+export type ExhibitionInstallationImage = typeof exhibitionInstallationImages.$inferSelect;
+export type NewExhibitionInstallationImage = typeof exhibitionInstallationImages.$inferInsert;
+export type ExhibitionOpeningGate = typeof exhibitionOpeningGates.$inferSelect;
+export type NewExhibitionOpeningGate = typeof exhibitionOpeningGates.$inferInsert;
+export type ExhibitionOpeningItem = typeof exhibitionOpeningItems.$inferSelect;
+export type NewExhibitionOpeningItem = typeof exhibitionOpeningItems.$inferInsert;
+export type ExhibitionReadinessPlan = typeof exhibitionReadinessPlans.$inferSelect;
+export type NewExhibitionReadinessPlan = typeof exhibitionReadinessPlans.$inferInsert;
+export type ExhibitionReadinessCheck = typeof exhibitionReadinessChecks.$inferSelect;
+export type NewExhibitionReadinessCheck = typeof exhibitionReadinessChecks.$inferInsert;
+export type ExhibitionReadinessImage = typeof exhibitionReadinessImages.$inferSelect;
+export type NewExhibitionReadinessImage = typeof exhibitionReadinessImages.$inferInsert;
+export type ExhibitionWatch = typeof exhibitionWatches.$inferSelect;
+export type NewExhibitionWatch = typeof exhibitionWatches.$inferInsert;
+export type ExhibitionWatchObservation = typeof exhibitionWatchObservations.$inferSelect;
+export type NewExhibitionWatchObservation = typeof exhibitionWatchObservations.$inferInsert;
+export type ExhibitionWatchImage = typeof exhibitionWatchImages.$inferSelect;
+export type NewExhibitionWatchImage = typeof exhibitionWatchImages.$inferInsert;
+export type ExhibitionRecovery = typeof exhibitionRecoveries.$inferSelect;
+export type NewExhibitionRecovery = typeof exhibitionRecoveries.$inferInsert;
+export type ExhibitionRecoveryCheck = typeof exhibitionRecoveryChecks.$inferSelect;
+export type NewExhibitionRecoveryCheck = typeof exhibitionRecoveryChecks.$inferInsert;
+export type ExhibitionRecoveryImage = typeof exhibitionRecoveryImages.$inferSelect;
+export type NewExhibitionRecoveryImage = typeof exhibitionRecoveryImages.$inferInsert;
 export type ArchiveSnapshot = typeof archiveSnapshots.$inferSelect;
 export type NewArchiveSnapshot = typeof archiveSnapshots.$inferInsert;

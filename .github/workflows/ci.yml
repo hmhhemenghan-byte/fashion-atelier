@@ -1,0 +1,43 @@
+name: NÉRA ATELIER CI
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: nera-ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  quality:
+    name: Lint, build, and test
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v4
+
+      - name: Use Node.js 22.13
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22.13.0
+          cache: npm
+
+      - name: Install locked dependencies
+        run: npm run install:ci
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Validate independent Cloudflare template
+        run: npm run cloudflare:check-template
+
+      - name: Build and test
+        run: npm test

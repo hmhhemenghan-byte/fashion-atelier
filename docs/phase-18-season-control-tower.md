@@ -31,7 +31,7 @@
 3. 进行中的样衣借调与开放展厅；
 4. 等待人工批准的外联对象与开放关系机会。
 
-Phase 25 接入后，“`X / 15`”代表十五项明确关卡中已经通过的数量，不是综合商业评分。
+Phase 36 接入后，“`X / 26`”代表二十六项明确关卡中已经通过的数量，不是综合商业评分。
 
 ### 2. 当前系列脉搏
 
@@ -49,7 +49,7 @@ Phase 25 接入后，“`X / 15`”代表十五项明确关卡中已经通过的
 
 系列准备度为通过项数量除以 5。它只说明资料状态，不评价设计质量、商业潜力或媒体价值。
 
-### 3. 十五项事实关卡
+### 3. 二十六项事实关卡
 
 | 关卡 | 清晰条件 | 返回位置 |
 | --- | --- | --- |
@@ -62,6 +62,17 @@ Phase 25 接入后，“`X / 15`”代表十五项明确关卡中已经通过的
 | 最终封样 | 已公开 Look 的当前批准修订拥有已批准或封存的最终样衣，且没有失败的关键核对 | Final Sample Gate |
 | 生产放行 | 已公开 Look 的当前封样拥有已生成标识的生产放行包，且没有阻塞的准备核对 | Production Release Desk |
 | 生产偏差闭环 | 没有未关闭的高风险生产偏差或逾期复核 | Production Change Control |
+| 成衣实物验收 | 所有有效 NERA-GO 均有通过的人工验收，且没有开放的失败核对 | Edition Acceptance |
+| 溯源档案发布 | 所有已验收实物版本均有人工发布的溯源档案，且没有失败的公开核对 | Provenance Dossier |
+| 作品养护状态 | 没有未解决的高风险养护问题或逾期复查 | Conservation Atelier |
+| 展陈安全放行 | 没有关键条件阻塞、临近安装未批准或逾期撤展 | Exhibition Readiness |
+| 展期监测闭环 | 在展作品均已开启监测，没有超过人工检查间隔或未处理的最新异常 | Exhibition Watch |
+| 展后复原闭环 | 已撤展作品均已形成人工冻结结论，且没有关键复原阻塞或到期静置事项 | Exhibition Recovery |
+| 档案策展评审 | 没有受实物状态阻塞、缺少关键依据或等待修改的开放策展评审 | Archive Curation |
+| 展览释读评审 | 没有缺少章节、作品事实、署名、权利核对、无障碍文字或等待修改的开放释读评审 | Exhibition Interpretation |
+| 展览交付签核 | 没有缺少校样、格式、位置、权利、无障碍或交接事实的开放交付包 | Exhibition Delivery Desk |
+| 展览装校验收 | 没有临近开放、等待整改、现场核对不通过或缺少私密证据的装校签核 | Exhibition Installation Gate |
+| 展览开放签核 | 没有临近开放、纳入作品未就绪、运行边界缺失或等待人工决定的开放总签核 | Exhibition Opening Gate |
 | 关键排期 | 没有逾期日历节点 | Editorial Calendar |
 | 展厅回应 | 没有 `submitted` / `reviewing` 请求 | Appointment Response |
 | 样衣归还 | 没有超过预计归还时间的进行中借调 | Sample Fulfilment |
@@ -84,6 +95,13 @@ Phase 25 接入后，“`X / 15`”代表十五项明确关卡中已经通过的
 - 已批准试身尚无最终封样，以及封样核对中的失败项；
 - 已封存最终样尚无生产放行，以及准备核对中的阻塞项；
 - 已授权生产放行后的高风险偏差与逾期复核；
+- 有效生产放行尚无通过验收，以及验收核对中的失败项；
+- 已验收版本尚无公开溯源档案，以及公开核对中的失败项；
+- 养护报告的逾期复查与未解决高风险状态检查；
+- 展陈方案的关键条件阻塞、未来十四天内未批准安装与逾期撤展；
+- 已进入展示窗口但未开启监测、检查逾期或最新观察异常；
+- 已撤展作品尚未接收或复原闭环、关键复原核对阻塞与到期静置复核；
+- 策展评审中的实物状态阻塞、缺少选择依据与修改后复审；
 - 已逾期或未来 14 天内的日历节点；
 - 待审核的展厅请求；
 - 已逾期的样衣归还；
@@ -97,13 +115,13 @@ Phase 25 接入后，“`X / 15`”代表十五项明确关卡中已经通过的
 
 ### 5. Studio Map
 
-当前 24 个业务工作台按五个组重新组织，但不改变原工作流或数据所有权。第 18 阶段是承载这张索引的只读作战台，因此不在索引中重复显示：
+当前 31 个业务工作台按五个组重新组织，但不改变原工作流或数据所有权。第 18 阶段是承载这张索引的只读作战台，因此不在索引中重复显示：
 
-- CREATE：系列、Lookbook、过程档案、Atelier Review Board、Material Room、Technical Atelier、Fitting Room、Final Sample Gate、Production Release Desk、Production Change Control；
-- PUBLISH：Publication、编辑运营、日历、Showroom；
+- CREATE：系列、Lookbook、过程档案、Atelier Review Board、Material Room、Technical Atelier、Fitting Room、Final Sample Gate、Production Release Desk、Production Change Control、Archive Curation；
+- PUBLISH：Provenance Dossier、Exhibition Readiness、Publication、编辑运营、日历、Showroom；
 - RELATION：请求、样衣履约、沟通、关系、外联；
 - OPERATIONS：库存、使用效能、Placement、Coverage；
-- ARCHIVE：交接归档。
+- ARCHIVE：交接归档、Conservation Atelier、Exhibition Watch、Exhibition Recovery。
 
 每个模块显示一个可解释的实时数值和 `clear / active / attention` 状态。点击后通过页面锚点进入原工作台。
 
@@ -125,7 +143,7 @@ GET /api/studio/command
 - Design Reviews 与 Revision Actions；
 - Materials 与 Look Material Assignments；
 - Technical Packs 与 Construction Notes；
-- Fitting Sessions、Issues、Sample Signoffs、Signoff Checks、Production Releases、Release Checks 与 Production Exceptions；
+- Fitting Sessions、Issues、Sample Signoffs、Signoff Checks、Production Releases、Release Checks、Production Exceptions、Edition Acceptances、Provenance Dossiers、Conservation Reports、Exhibition Readiness Plans、Exhibition Watches、Exhibition Recoveries 与 Curatorial Projects；
 - 最新 Archive Snapshot 摘要。
 
 接口只返回总览需要的安全字段。Showroom 的 `accessTokenHash`、联系人邮箱、电话、外联草稿正文、物流地址与追踪号都不会进入响应。
@@ -149,6 +167,13 @@ nera:fitting-updated
 nera:sample-signoff-updated
 nera:production-release-updated
 nera:production-exception-updated
+nera:production-acceptance-updated
+nera:provenance-updated
+nera:conservation-updated
+nera:exhibition-updated
+nera:exhibition-watch-updated
+nera:exhibition-recovery-updated
+nera:curation-updated
 ```
 
 设计师也可以使用“刷新事实”按钮主动同步。
@@ -165,10 +190,10 @@ nera:production-exception-updated
 
 ## 归档与迁移
 
-第 18 阶段本身仍是现有事实的即时投影，不新增 D1 表，不写入不可逆汇总。Phase 25 接入后：
+第 18 阶段本身仍是现有事实的即时投影，不新增 D1 表，不写入不可逆汇总。Phase 36 接入后：
 
 - 作战台本身仍无数据库迁移；
-- 完整归档结构使用 `nera-archive/16`；
+- 完整归档结构使用 `nera-archive/27`；
 - 原始业务工作台数据仍是唯一事实来源；
 - 代码可随仓库直接打包或以后推送到 GitHub；
 - 切换托管平台时，只需按既有方案迁移 D1、R2 与运行时适配，不需要迁移单独的“作战台数据”。

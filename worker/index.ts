@@ -7,6 +7,9 @@ interface Env {
   DB: D1Database;
   BUCKET: R2Bucket;
   ADMIN_EMAILS?: string;
+  AUTH_PROVIDER?: string;
+  TEAM_DOMAIN?: string;
+  POLICY_AUD?: string;
   IMAGES: {
     input(stream: ReadableStream): {
       transform(options: Record<string, unknown>): {
