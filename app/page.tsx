@@ -35,6 +35,7 @@ export default async function Home() {
             <a href="#archive">档案</a>
             <a href="#craft">工艺</a>
             <Link href="/press">媒体</Link>
+            <Link href="/exhibitions/latest">展陈</Link>
             <a href="#about">关于</a>
           </nav>
           <Link className="index-link" href="/collections" aria-label="查看系列档案">
@@ -286,6 +287,7 @@ export default async function Home() {
         <div className="footer-links">
           <Link href="/collections">VIEW COLLECTIONS →</Link>
           <Link href="/press">PRESS ROOM →</Link>
+          <Link href="/exhibitions/latest">VIRTUAL EXHIBITION →</Link>
           <a href="/studio">STUDIO LOGIN →</a>
         </div>
         <div className="footer-bottom">

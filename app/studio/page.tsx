@@ -2,6 +2,7 @@ import { chatGPTSignOutPath, requireChatGPTUser } from "@/app/chatgpt-auth";
 import { isAdminEmail } from "@/lib/runtime";
 import Link from "next/link";
 import StudioClient from "./studio-client";
+import CommandPalette from "./command-palette";
 
 export const dynamic = "force-dynamic";
 
@@ -31,6 +32,7 @@ export default async function StudioPage() {
 
   return (
     <main className="studio-shell">
+      <CommandPalette />
       <header className="studio-header">
         <Link className="studio-brand" href="/">NÉRA <span>ATELIER</span></Link>
         <div className="studio-user">
