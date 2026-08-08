@@ -105,7 +105,7 @@ export default function CommandPalette() {
             ))
           ) : (
             <div className="p-8 text-center text-xs text-neutral-500">
-              No workspace or command matches "{search}".
+              No workspace or command matches &quot;{search}&quot;.
             </div>
           )}
         </div>

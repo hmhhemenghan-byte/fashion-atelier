@@ -19,10 +19,14 @@ if [[ ! -x "${vinext}" ]]; then
 fi
 
 echo "Running bounded vinext build..."
-timeout \
-  --signal=TERM \
-  --kill-after="${SITES_BUILD_KILL_AFTER:-10s}" \
-  "${SITES_BUILD_TIMEOUT:-3m}" \
+if command -v timeout >/dev/null && timeout --help 2>&1 | grep -q -- '--signal'; then
+  timeout \
+    --signal=TERM \
+    --kill-after="${SITES_BUILD_KILL_AFTER:-10s}" \
+    "${SITES_BUILD_TIMEOUT:-3m}" \
+    "${vinext}" build
+else
   "${vinext}" build
+fi
 
 "${script_dir}/validate-artifact.sh"

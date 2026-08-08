@@ -30,9 +30,9 @@ export default function PublicPressKitsPage() {
             </p>
             <div className="pt-2 flex justify-between items-center text-xs">
               <span className="text-neutral-500">FORMAT: ZIP (145 MB)</span>
-              <a href="/press" className="px-3 py-1 bg-neutral-900 border border-neutral-700 hover:bg-neutral-800 transition">
+              <Link href="/press" className="px-3 py-1 bg-neutral-900 border border-neutral-700 hover:bg-neutral-800 transition">
                 DOWNLOAD KIT →
-              </a>
+              </Link>
             </div>
           </div>
 
@@ -44,9 +44,9 @@ export default function PublicPressKitsPage() {
             </p>
             <div className="pt-2 flex justify-between items-center text-xs">
               <span className="text-neutral-500">FORMAT: VECTOR (12 MB)</span>
-              <a href="/press" className="px-3 py-1 bg-neutral-900 border border-neutral-700 hover:bg-neutral-800 transition">
+              <Link href="/press" className="px-3 py-1 bg-neutral-900 border border-neutral-700 hover:bg-neutral-800 transition">
                 DOWNLOAD LOGOS →
-              </a>
+              </Link>
             </div>
           </div>
         </div>

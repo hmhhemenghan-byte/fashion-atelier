@@ -25,20 +25,24 @@ export function sites(): Plugin {
       root = config.root;
     },
     async closeBundle() {
-      const outputDirectory = resolve(root, "dist", ".openai");
-      const hostingConfig = resolve(root, ".openai", "hosting.json");
-      const drizzleSource = resolve(root, "drizzle");
+      try {
+        const outputDirectory = resolve(root, "dist", ".openai");
+        const hostingConfig = resolve(root, ".openai", "hosting.json");
+        const drizzleSource = resolve(root, "drizzle");
 
-      await rm(outputDirectory, { recursive: true, force: true });
-      await mkdir(outputDirectory, { recursive: true });
+        await rm(outputDirectory, { recursive: true, force: true });
+        await mkdir(outputDirectory, { recursive: true });
 
-      if (await exists(hostingConfig)) {
-        await cp(hostingConfig, resolve(outputDirectory, "hosting.json"));
-      }
-      if (await exists(drizzleSource)) {
-        await cp(drizzleSource, resolve(outputDirectory, "drizzle"), {
-          recursive: true,
-        });
+        if (await exists(hostingConfig)) {
+          await cp(hostingConfig, resolve(outputDirectory, "hosting.json"));
+        }
+        if (await exists(drizzleSource)) {
+          await cp(drizzleSource, resolve(outputDirectory, "drizzle"), {
+            recursive: true,
+          });
+        }
+      } catch (err) {
+        console.warn("[sites-vite-plugin] closeBundle warning:", err);
       }
     },
   };

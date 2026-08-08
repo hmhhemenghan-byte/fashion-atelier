@@ -34,6 +34,25 @@ const localBindingConfig = {
     : [],
 };
 
+import path from "node:path";
+import type { Plugin } from "vite";
+
+function fixRolldownWindowsPathPlugin(): Plugin {
+  return {
+    name: "fix-rolldown-windows-path",
+    configResolved(config) {
+      if (process.platform === "win32") {
+        for (const envName of Object.keys(config.environments)) {
+          const env = config.environments[envName];
+          if (env?.build?.outDir && path.isAbsolute(env.build.outDir)) {
+            env.build.outDir = path.relative(config.root, env.build.outDir) || ".";
+          }
+        }
+      }
+    },
+  };
+}
+
 export default defineConfig(async () => {
   // Keep Wrangler and Miniflare state project-local. These are non-secret tool
   // settings; application environment belongs in ignored `.env*` files.
@@ -53,6 +72,7 @@ export default defineConfig(async () => {
         : {}),
     },
     plugins: [
+      fixRolldownWindowsPathPlugin(),
       vinext(),
       sites(),
       cloudflare({
